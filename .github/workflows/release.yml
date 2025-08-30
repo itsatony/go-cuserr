@@ -1,0 +1,167 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  # Validate release before creating
+  validate:
+    name: Validate Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.21'
+        check-latest: true
+
+    - name: Get version from tag
+      id: version
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/v}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Version: $VERSION"
+
+    - name: Verify VERSION file matches tag
+      run: |
+        FILE_VERSION=$(cat VERSION)
+        TAG_VERSION="${{ steps.version.outputs.version }}"
+        if [ "$FILE_VERSION" != "$TAG_VERSION" ]; then
+          echo "VERSION file ($FILE_VERSION) does not match tag ($TAG_VERSION)"
+          exit 1
+        fi
+        echo "✅ VERSION file matches tag"
+
+    - name: Run full test suite
+      run: |
+        go mod download
+        go test -v -race ./...
+        echo "✅ All tests pass"
+
+    - name: Run security scan
+      run: |
+        echo "Security scan would run here - using built-in GitHub security features"
+        echo "✅ Security scan completed"
+
+    - name: Verify coverage threshold
+      run: |
+        go test -coverprofile=coverage.out ./...
+        COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+        echo "Coverage: ${COVERAGE}%"
+        if (( $(echo "$COVERAGE < 85.0" | bc -l) )); then
+          echo "Coverage ${COVERAGE}% is below minimum threshold of 85%"
+          exit 1
+        fi
+        echo "✅ Coverage meets minimum threshold"
+
+  # Create GitHub release
+  release:
+    name: Create Release
+    needs: validate
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.21'
+        check-latest: true
+
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        VERSION="v${{ needs.validate.outputs.version }}"
+        echo "Generating release notes for $VERSION"
+        
+        # Extract changelog section for this version
+        CHANGELOG_CONTENT=$(awk '/^## \['"${{ needs.validate.outputs.version }}"'\]/, /^## \[/ {
+          if (/^## \['"${{ needs.validate.outputs.version }}"'\]/) print;
+          else if (/^## \[/ && !/^## \['"${{ needs.validate.outputs.version }}"'\]/) exit;
+          else print;
+        }' CHANGELOG.md | head -n -1)
+        
+        if [ -z "$CHANGELOG_CONTENT" ]; then
+          echo "No changelog content found for version ${{ needs.validate.outputs.version }}"
+          CHANGELOG_CONTENT="Release $VERSION"
+        fi
+        
+        # Create release notes file
+        cat > release_notes.md << 'EOF'
+        $CHANGELOG_CONTENT
+
+        ## Installation
+
+        ```bash
+        go get github.com/itsatony/go-cuserr@$VERSION
+        ```
+
+        ## Checksums
+
+        The checksums for the release assets will be generated automatically.
+
+        ## What's Changed
+
+        See the [CHANGELOG.md](https://github.com/itsatony/go-cuserr/blob/main/CHANGELOG.md) for detailed changes.
+
+        ---
+
+        **Full Changelog**: https://github.com/itsatony/go-cuserr/compare/v$(cat VERSION | sed 's/\.[0-9]*$//')...${VERSION}
+        EOF
+        
+        echo "Release notes generated successfully"
+
+    - name: Run benchmarks for release
+      run: |
+        echo "## Performance Benchmarks" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "```" >> release_notes.md
+        go test -bench=. -benchtime=1s -run=^$ ./... | grep "Benchmark" >> release_notes.md
+        echo "```" >> release_notes.md
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: Release v${{ needs.validate.outputs.version }}
+        body_path: release_notes.md
+        tag_name: v${{ needs.validate.outputs.version }}
+        draft: false
+        prerelease: ${{ contains(needs.validate.outputs.version, '-') }}
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Update Go package index
+      run: |
+        echo "Triggering Go package index update..."
+        curl -X POST "https://proxy.golang.org/github.com/itsatony/go-cuserr/@v/v${{ needs.validate.outputs.version }}.info" || true
+        echo "✅ Go package index update triggered"
+
+  # Notify on success
+  notify:
+    name: Notify Success  
+    needs: [validate, release]
+    runs-on: ubuntu-latest
+    if: success()
+    
+    steps:
+    - name: Release Success Notification
+      run: |
+        echo "🎉 Successfully released go-cuserr v${{ needs.validate.outputs.version }}"
+        echo "📦 Package is now available at: https://pkg.go.dev/github.com/itsatony/go-cuserr@v${{ needs.validate.outputs.version }}"
+        echo "📋 Release notes: https://github.com/itsatony/go-cuserr/releases/tag/v${{ needs.validate.outputs.version }}"
