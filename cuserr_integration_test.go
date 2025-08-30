@@ -31,7 +31,10 @@ func TestHTTPIntegrationEndToEnd(t *testing.T) {
 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(err.ToHTTPStatus())
-			json.NewEncoder(w).Encode(err.ToClientJSON())
+			if encodeErr := json.NewEncoder(w).Encode(err.ToClientJSON()); encodeErr != nil {
+				http.Error(w, "JSON encoding failed", http.StatusInternalServerError)
+				return
+			}
 
 		case "/validation-error":
 			err := NewCustomError(ErrInvalidInput, nil, "email format is invalid").
@@ -41,7 +44,10 @@ func TestHTTPIntegrationEndToEnd(t *testing.T) {
 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(err.ToHTTPStatus())
-			json.NewEncoder(w).Encode(err.ToJSON())
+			if encodeErr := json.NewEncoder(w).Encode(err.ToJSON()); encodeErr != nil {
+				http.Error(w, "JSON encoding failed", http.StatusInternalServerError)
+				return
+			}
 
 		case "/internal-error":
 			originalErr := fmt.Errorf("database connection failed")
@@ -52,7 +58,10 @@ func TestHTTPIntegrationEndToEnd(t *testing.T) {
 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(err.ToHTTPStatus())
-			json.NewEncoder(w).Encode(err.ToClientJSON())
+			if encodeErr := json.NewEncoder(w).Encode(err.ToClientJSON()); encodeErr != nil {
+				http.Error(w, "JSON encoding failed", http.StatusInternalServerError)
+				return
+			}
 
 		case "/rate-limit":
 			err := NewCustomError(ErrRateLimit, nil, "API rate limit exceeded").
@@ -62,11 +71,16 @@ func TestHTTPIntegrationEndToEnd(t *testing.T) {
 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(err.ToHTTPStatus())
-			json.NewEncoder(w).Encode(err.ToJSON())
+			if encodeErr := json.NewEncoder(w).Encode(err.ToJSON()); encodeErr != nil {
+				http.Error(w, "JSON encoding failed", http.StatusInternalServerError)
+				return
+			}
 
 		default:
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"status": "ok"}`))
+			if _, writeErr := w.Write([]byte(`{"status": "ok"}`)); writeErr != nil {
+				http.Error(w, "Write failed", http.StatusInternalServerError)
+			}
 		}
 	})
 

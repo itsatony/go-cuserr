@@ -243,7 +243,7 @@ func TestConcurrentStackTraceAccess(t *testing.T) {
 			go func() {
 				_ = err.GetStackTrace()
 				_ = err.GetStackTraceString()
-				err.FilterStackTrace("testing")
+				_ = err.FilterStackTrace("testing")
 			}()
 
 			errors[id] = err
