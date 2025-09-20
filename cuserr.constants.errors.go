@@ -72,44 +72,80 @@ const (
 	SENTINEL_MSG_EXTERNAL = "external service error"
 
 	// Stack trace configuration constants
+
+	// DEFAULT_STACK_DEPTH defines the default number of stack frames to capture
 	DEFAULT_STACK_DEPTH = 10
-	STACK_SKIP_FRAMES   = 2
+	// STACK_SKIP_FRAMES defines the number of frames to skip when capturing stack traces
+	STACK_SKIP_FRAMES = 2
 
 	// JSON field names for serialization
-	JSON_FIELD_ERROR      = "error"
-	JSON_FIELD_CODE       = "code"
-	JSON_FIELD_MESSAGE    = "message"
-	JSON_FIELD_CATEGORY   = "category"
-	JSON_FIELD_METADATA   = "metadata"
+
+	// JSON_FIELD_ERROR defines the JSON field name for error objects
+	JSON_FIELD_ERROR = "error"
+	// JSON_FIELD_CODE defines the JSON field name for error codes
+	JSON_FIELD_CODE = "code"
+	// JSON_FIELD_MESSAGE defines the JSON field name for error messages
+	JSON_FIELD_MESSAGE = "message"
+	// JSON_FIELD_CATEGORY defines the JSON field name for error categories
+	JSON_FIELD_CATEGORY = "category"
+	// JSON_FIELD_METADATA defines the JSON field name for error metadata
+	JSON_FIELD_METADATA = "metadata"
+	// JSON_FIELD_REQUEST_ID defines the JSON field name for request IDs
 	JSON_FIELD_REQUEST_ID = "request_id"
-	JSON_FIELD_TIMESTAMP  = "timestamp"
+	// JSON_FIELD_TIMESTAMP defines the JSON field name for timestamps
+	JSON_FIELD_TIMESTAMP = "timestamp"
 
 	// HTTP status codes
-	HTTP_STATUS_BAD_REQUEST           = 400
-	HTTP_STATUS_UNAUTHORIZED          = 401
-	HTTP_STATUS_FORBIDDEN             = 403
-	HTTP_STATUS_NOT_FOUND             = 404
-	HTTP_STATUS_REQUEST_TIMEOUT       = 408
-	HTTP_STATUS_CONFLICT              = 409
-	HTTP_STATUS_TOO_MANY_REQUESTS     = 429
+
+	// HTTP_STATUS_BAD_REQUEST represents HTTP 400 Bad Request status
+	HTTP_STATUS_BAD_REQUEST = 400
+	// HTTP_STATUS_UNAUTHORIZED represents HTTP 401 Unauthorized status
+	HTTP_STATUS_UNAUTHORIZED = 401
+	// HTTP_STATUS_FORBIDDEN represents HTTP 403 Forbidden status
+	HTTP_STATUS_FORBIDDEN = 403
+	// HTTP_STATUS_NOT_FOUND represents HTTP 404 Not Found status
+	HTTP_STATUS_NOT_FOUND = 404
+	// HTTP_STATUS_REQUEST_TIMEOUT represents HTTP 408 Request Timeout status
+	HTTP_STATUS_REQUEST_TIMEOUT = 408
+	// HTTP_STATUS_CONFLICT represents HTTP 409 Conflict status
+	HTTP_STATUS_CONFLICT = 409
+	// HTTP_STATUS_TOO_MANY_REQUESTS represents HTTP 429 Too Many Requests status
+	HTTP_STATUS_TOO_MANY_REQUESTS = 429
+	// HTTP_STATUS_INTERNAL_SERVER_ERROR represents HTTP 500 Internal Server Error status
 	HTTP_STATUS_INTERNAL_SERVER_ERROR = 500
-	HTTP_STATUS_BAD_GATEWAY           = 502
-	HTTP_STATUS_DEFAULT_ERROR         = 500
+	// HTTP_STATUS_BAD_GATEWAY represents HTTP 502 Bad Gateway status
+	HTTP_STATUS_BAD_GATEWAY = 502
+	// HTTP_STATUS_DEFAULT_ERROR represents the default HTTP status for errors
+	HTTP_STATUS_DEFAULT_ERROR = 500
 
 	// Log message templates for detailed error reporting
-	LOG_TEMPLATE_ERROR_CREATED   = "CustomError created: category=%s, code=%s, message=%s"
+
+	// LOG_TEMPLATE_ERROR_CREATED defines template for error creation logging
+	LOG_TEMPLATE_ERROR_CREATED = "CustomError created: category=%s, code=%s, message=%s"
+	// LOG_TEMPLATE_ERROR_WITH_META defines template for metadata logging
 	LOG_TEMPLATE_ERROR_WITH_META = "CustomError with metadata: %s=%s"
-	LOG_TEMPLATE_STACK_FRAME     = "  %s\n    %s:%d"
-	LOG_TEMPLATE_ERROR_DETAIL    = "Error: %s\nCategory: %s, Code: %s"
-	LOG_TEMPLATE_REQUEST_ID      = "RequestID: %s"
-	LOG_TEMPLATE_WRAPPED_ERROR   = "Wrapped: %v"
+	// LOG_TEMPLATE_STACK_FRAME defines template for stack frame formatting
+	LOG_TEMPLATE_STACK_FRAME = "  %s\n    %s:%d"
+	// LOG_TEMPLATE_ERROR_DETAIL defines template for detailed error information
+	LOG_TEMPLATE_ERROR_DETAIL = "Error: %s\nCategory: %s, Code: %s"
+	// LOG_TEMPLATE_REQUEST_ID defines template for request ID logging
+	LOG_TEMPLATE_REQUEST_ID = "RequestID: %s"
+	// LOG_TEMPLATE_WRAPPED_ERROR defines template for wrapped error logging
+	LOG_TEMPLATE_WRAPPED_ERROR = "Wrapped: %v"
 
 	// Configuration environment variables
+
+	// ENV_ENABLE_STACK_TRACE defines environment variable for enabling stack traces
 	ENV_ENABLE_STACK_TRACE = "CUSERR_ENABLE_STACK_TRACE"
-	ENV_MAX_STACK_DEPTH    = "CUSERR_MAX_STACK_DEPTH"
-	ENV_PRODUCTION_MODE    = "CUSERR_PRODUCTION_MODE"
+	// ENV_MAX_STACK_DEPTH defines environment variable for maximum stack depth
+	ENV_MAX_STACK_DEPTH = "CUSERR_MAX_STACK_DEPTH"
+	// ENV_PRODUCTION_MODE defines environment variable for production mode
+	ENV_PRODUCTION_MODE = "CUSERR_PRODUCTION_MODE"
 
 	// Function names for stack trace filtering
-	MAIN_FUNCTION_NAME    = "main.main"
+
+	// MAIN_FUNCTION_NAME defines the main function name for stack filtering
+	MAIN_FUNCTION_NAME = "main.main"
+	// TESTING_FUNCTION_NAME defines the testing function prefix for stack filtering
 	TESTING_FUNCTION_NAME = "testing."
 )
