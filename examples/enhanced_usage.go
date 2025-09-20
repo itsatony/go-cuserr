@@ -1,7 +1,9 @@
+//go:build enhanced
+
 // Package main demonstrates the enhanced features of go-cuserr v0.2.0+
 // This file contains comprehensive examples of the new v0.2.0 features
 // To run: go run enhanced_usage.go
-//go:build enhanced
+//
 package main
 
 import (
