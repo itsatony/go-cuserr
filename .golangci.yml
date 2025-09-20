@@ -157,6 +157,7 @@ issues:
     # Exclude magic number checks for HTTP status codes
     - path: cuserr\.constants\.errors\.go
       linters:
+        - revive  # Allow ALL_CAPS constants in this file
     
     # Exclude magic number checks for test files  
     - path: _test\.go
@@ -177,13 +178,6 @@ issues:
         - unused
         - gosec
     
-    # Exclude some linters for examples
-    - path: examples/
-      linters:
-        - gochecknoglobals
-        - gochecknoinits
-        - funlen
-        - lll
 
   exclude-use-default: false
 
