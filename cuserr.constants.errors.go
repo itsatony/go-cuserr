@@ -2,7 +2,7 @@ package cuserr
 
 const (
 	// Package information constants
-	
+
 	// PACKAGE_NAME defines the name of the cuserr package
 	PACKAGE_NAME = "cuserr"
 	// PACKAGE_VERSION defines the current version of the cuserr package
