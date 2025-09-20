@@ -166,6 +166,7 @@ issues:
         - gocognit
         - dupl
         - cyclop
+        - gocyclo
         - errcheck
         - gosec
         - testpackage

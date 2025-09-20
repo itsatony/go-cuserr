@@ -132,10 +132,10 @@ func TestContextExtractionResilience(t *testing.T) {
 	t.Run("Context Configuration Edge Cases", func(t *testing.T) {
 		// Test context configuration with edge cases that could break in production
 
-		// Test nil context handling
-		err := NewErrorWithContext(nil, ErrInternal, nil, "nil context test")
+		// Test nil context handling (use context.TODO per linter guidance)
+		err := NewErrorWithContext(context.TODO(), ErrInternal, nil, "nil context test")
 		if err == nil {
-			t.Fatal("NewErrorWithContext should handle nil context gracefully")
+			t.Fatal("NewErrorWithContext should handle empty context gracefully")
 		}
 
 		// Test context without config (should use global default)
@@ -534,23 +534,10 @@ func TestLoggingFrameworkIntegration(t *testing.T) {
 	})
 }
 
-// TestTypedMetadataEnterpriseScenarios validates comprehensive typed metadata
-// functionality under enterprise-grade scenarios with edge cases.
-//
-// Enterprise scenarios tested:
-// - Multi-tenant metadata isolation and inheritance
-// - Security context propagation and validation
-// - Business context accuracy across operations
-// - Performance metadata under load conditions
-// - Resource metadata with complex identifiers
-//
-// This is critical because:
-// - Enterprise applications require reliable metadata isolation
-// - Security contexts must be preserved accurately for audit trails
-// - Performance metadata enables production debugging
-// - Business context supports compliance and reporting requirements
-func TestTypedMetadataEnterpriseScenarios(t *testing.T) {
-	t.Run("Complete Typed Metadata API Coverage", func(t *testing.T) {
+// TestTypedMetadataSessionAndTracing validates session and tracing metadata operations
+// for enterprise applications requiring audit trails and request correlation.
+func TestTypedMetadataSessionAndTracing(t *testing.T) {
+	t.Run("Session and Tracing Metadata Operations", func(t *testing.T) {
 		err := NewExternalError("payment-gateway", "process_payment", fmt.Errorf("gateway timeout"))
 		tm := err.GetTypedMetadata()
 
