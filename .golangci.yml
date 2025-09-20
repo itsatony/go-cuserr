@@ -16,9 +16,7 @@ linters:
     - contextcheck
     - dupl
     - durationcheck
-    - execinquery
     - exhaustive
-    - exportloopref
     - funlen
     - gochecknoglobals
     - gochecknoinits
@@ -26,7 +24,6 @@ linters:
     - goconst
     - gocyclo
     - goimports
-    - gomnd
     - gomoddirectives
     - gomodguard
     - goprintffuncname
@@ -88,10 +85,6 @@ linters-settings:
   lll:
     line-length: 120
   
-  gomnd:
-    settings:
-      mnd:
-        checks: argument,case,condition,operation,return,assign
 
   gocritic:
     enabled-tags:
@@ -164,12 +157,10 @@ issues:
     # Exclude magic number checks for HTTP status codes
     - path: cuserr\.constants\.errors\.go
       linters:
-        - gomnd
     
     # Exclude magic number checks for test files  
     - path: _test\.go
       linters:
-        - gomnd
         - funlen
         - gocognit
         - dupl
@@ -192,7 +183,6 @@ issues:
         - gochecknoglobals
         - gochecknoinits
         - funlen
-        - gomnd
         - lll
 
   exclude-use-default: false
