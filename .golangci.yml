@@ -125,6 +125,14 @@ issues:
     # Allow package comments to be flexible
     - "should have a package comment"
     - "comment on exported.*should be of the form"
+    # Allow context fields in builder structs
+    - "found a struct that contains a context.Context field"
+    # Allow ALL_CAPS for constants (vAI standard)
+    - "don't use ALL_CAPS in Go names"
+    # Allow repeated strings in tests
+    - "has .* occurrences, make it a constant"
+    # Allow builtin redefinition in limited scope
+    - "redefinition of the built-in function"
   
   exclude-rules:
     # Exclude magic number checks for HTTP status codes
