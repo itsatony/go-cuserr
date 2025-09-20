@@ -1211,8 +1211,8 @@ func TestUncoveredContextHelpers(t *testing.T) {
 		}
 
 		// Test with nil context
-		if requestID := GetRequestIDFromContext(nil); requestID != "" {
-			t.Error("Should return empty string for nil context")
+		if requestID := GetRequestIDFromContext(context.TODO()); requestID != "" {
+			t.Error("Should return empty string for empty context")
 		}
 	})
 }
@@ -1271,7 +1271,8 @@ func TestUncoveredTypedMetadataWithConstructors(t *testing.T) {
 		}
 
 		// Test NewExternalErrorWithTypedMetadata
-		externalErr, externalTM := NewExternalErrorWithTypedMetadata("payment-api", "charge", fmt.Errorf("service unavailable"))
+		serviceErr := fmt.Errorf("service unavailable")
+		externalErr, externalTM := NewExternalErrorWithTypedMetadata("payment-api", "charge", serviceErr)
 		if externalErr.Category != ErrorCategoryExternal {
 			t.Error("Should create external error")
 		}
