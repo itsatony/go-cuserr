@@ -186,4 +186,3 @@ func GetErrorMetadata(err error, key string) (string, bool) {
 	}
 	return "", false
 }
-
