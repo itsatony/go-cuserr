@@ -1,6 +1,7 @@
 package cuserr
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -8,6 +9,7 @@ import (
 
 // NewCustomError creates a new CustomError with the given sentinel error and context
 // This is the primary constructor for creating rich errors with automatic categorization
+// Uses lazy loading for metadata but captures stack traces immediately for accuracy
 func NewCustomError(sentinel error, wrapped error, message string) *CustomError {
 	category := mapSentinelToCategory(sentinel)
 	code := generateErrorCode(sentinel)
@@ -16,18 +18,16 @@ func NewCustomError(sentinel error, wrapped error, message string) *CustomError 
 		Category:  category,
 		Code:      code,
 		Message:   message,
-		metadata:  make(map[string]string),
 		Timestamp: time.Now().UTC(),
 		Wrapped:   wrapped,
 		Sentinel:  sentinel,
+		// metadata is nil - lazy loaded when needed
 	}
 
-	// Capture stack trace if enabled (thread-safe config access)
+	// Capture stack trace immediately if enabled (for accuracy)
 	config := GetConfig()
 	if config.EnableStackTrace {
-		err.mu.Lock()
 		err.stackTrace = captureStackTrace(STACK_SKIP_FRAMES)
-		err.mu.Unlock()
 	}
 
 	return err
@@ -35,31 +35,32 @@ func NewCustomError(sentinel error, wrapped error, message string) *CustomError 
 
 // NewCustomErrorWithCategory creates an error with explicit category
 // Use when you need direct control over error categorization
+// Uses lazy loading for metadata but captures stack traces immediately for accuracy
 func NewCustomErrorWithCategory(category ErrorCategory, code, message string) *CustomError {
 	err := &CustomError{
 		Category:  category,
 		Code:      code,
 		Message:   message,
-		metadata:  make(map[string]string),
 		Timestamp: time.Now().UTC(),
+		// metadata is nil - lazy loaded when needed
 	}
 
-	// Capture stack trace if enabled (thread-safe config access)
+	// Capture stack trace immediately if enabled (for accuracy)
 	config := GetConfig()
 	if config.EnableStackTrace {
-		err.mu.Lock()
 		err.stackTrace = captureStackTrace(STACK_SKIP_FRAMES)
-		err.mu.Unlock()
 	}
 
 	return err
 }
 
 // WithMetadata adds metadata to the error in a thread-safe manner
+// Implements lazy loading - map is created only when first metadata is added
 func (e *CustomError) WithMetadata(key, value string) *CustomError {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
+	// Lazy initialize metadata map
 	if e.metadata == nil {
 		e.metadata = make(map[string]string)
 	}
@@ -185,4 +186,41 @@ func GetErrorMetadata(err error, key string) (string, bool) {
 		return customErr.GetMetadata(key)
 	}
 	return "", false
+}
+
+// ensureStackTrace captures stack trace if enabled and not already captured
+// This implements lazy loading for stack traces
+func (e *CustomError) ensureStackTrace() {
+	config := GetConfig()
+	if !config.EnableStackTrace {
+		return
+	}
+
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	// Don't capture if explicitly cleared or already captured
+	if e.stackTraceCleared || e.stackTrace != nil {
+		return
+	}
+
+	e.stackTrace = captureStackTrace(STACK_SKIP_FRAMES + 1) // +1 for this method
+}
+
+// ensureStackTraceWithContext captures stack trace using context-based configuration
+func (e *CustomError) ensureStackTraceWithContext(ctx context.Context) {
+	config := GetConfigFromContext(ctx)
+	if !config.EnableStackTrace {
+		return
+	}
+
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	// Don't capture if explicitly cleared or already captured
+	if e.stackTraceCleared || e.stackTrace != nil {
+		return
+	}
+
+	e.stackTrace = captureStackTrace(STACK_SKIP_FRAMES + 1) // +1 for this method
 }

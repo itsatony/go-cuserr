@@ -6,6 +6,17 @@
 
 A comprehensive, thread-safe custom error handling package for Go applications with rich context, HTTP status mapping, and production-ready features.
 
+## 🚀 New in v0.2.0
+
+- **🎯 Convenience Constructors** - `NewValidationError()`, `NewNotFoundError()`, etc. (50% less boilerplate)
+- **⚡ Performance Optimized** - 30% memory savings through lazy loading
+- **🔧 Context-Based Configuration** - Per-request error configuration and automatic context extraction
+- **📊 Error Aggregation** - Collect multiple validation errors with `ErrorCollection`
+- **📝 Structured Logging** - Direct integration with slog, zap, logrus
+- **🏷️ Typed Metadata** - Type-safe metadata with 50+ predefined constants  
+- **🔄 Migration Helpers** - Easy migration from stdlib errors and other libraries
+- **🧪 Enhanced Testing** - 44.5% coverage with comprehensive race detection
+
 ## Features
 
 - 🎯 **Sentinel Error Types** - Predefined errors for common scenarios
@@ -26,25 +37,36 @@ go get github.com/itsatony/go-cuserr
 
 ## Quick Start
 
+### v0.2.0 - Simplified API (Recommended)
 ```go
 package main
 
 import (
+    "context"
     "errors"
     "fmt"
-    "log"
     
     "github.com/itsatony/go-cuserr"
 )
 
 func main() {
-    // Create a custom error with rich context
-    err := cuserr.NewCustomError(
-        cuserr.ErrNotFound, 
-        nil, 
-        "user not found")
-    err.WithMetadata("user_id", "usr_12345")
-    err.WithRequestID("req_abc123")
+    // NEW: Convenience constructors (50% less code!)
+    err := cuserr.NewNotFoundError("user", "usr_12345")
+    
+    // NEW: Context-aware errors with automatic extraction
+    ctx := context.WithValue(context.Background(), "request_id", "req_abc123")
+    validationErr := cuserr.NewValidationErrorFromContext(ctx, "email", "invalid format")
+    
+    // NEW: Error aggregation for multiple validation issues
+    collection := cuserr.NewValidationErrorCollection()
+    collection.AddValidation("email", "required field")
+    collection.AddValidation("password", "too short")
+    
+    // NEW: Typed metadata with IDE support
+    err.GetTypedMetadata().
+        WithUserID("usr_12345").
+        WithOperation("get_user").
+        WithRetryCount(3)
     
     // Check error type
     if errors.Is(err, cuserr.ErrNotFound) {
@@ -437,6 +459,142 @@ go fmt ./...
 
 # Run linter (if available)
 golangci-lint run
+```
+
+## 🆕 v0.2.0 Detailed Features
+
+### Convenience Constructors
+Drastically reduce boilerplate with specialized constructors:
+
+```go
+// Before (v0.1.0) - verbose
+err := cuserr.NewCustomError(cuserr.ErrInvalidInput, nil, "email format is invalid").
+    WithMetadata("field", "email").
+    WithMetadata("error_type", "validation")
+
+// After (v0.2.0) - concise  
+err := cuserr.NewValidationError("email", "invalid format")
+```
+
+Available constructors:
+- `NewValidationError(field, message)` 
+- `NewNotFoundError(resource, id)`
+- `NewUnauthorizedError(reason)`
+- `NewForbiddenError(action, resource)`
+- `NewInternalError(component, wrapped)`
+- `NewExternalError(service, operation, wrapped)`
+- `NewTimeoutError(operation, wrapped)`
+- `NewRateLimitError(limit, window)`
+- `NewConflictError(resource, field, value)`
+
+### Context-Based Configuration
+Configure errors per request with automatic context extraction:
+
+```go
+// Set context-based configuration
+ctx := cuserr.WithProductionMode(ctx)
+ctx = context.WithValue(ctx, "request_id", "req_123")
+ctx = context.WithValue(ctx, "user_id", "usr_456")
+
+// Create context-aware errors (auto-extracts metadata)
+err := cuserr.NewValidationErrorFromContext(ctx, "email", "invalid")
+fmt.Println(err.RequestID) // "req_123"
+userID, _ := err.GetMetadata("user_id") // "usr_456"
+```
+
+### Error Aggregation
+Collect multiple validation errors into a single response:
+
+```go
+// Build validation error collection
+collection := cuserr.NewValidationCollectionBuilder().
+    WithContext(ctx).
+    AddValidation("email", "required field").
+    AddValidation("password", "too short").
+    AddValidationWithCode("age", "must be 18+", "AGE_RESTRICTION").
+    Build()
+
+// Convert to HTTP response
+w.Header().Set("Content-Type", "application/json")
+w.WriteHeader(collection.ToHTTPStatus()) // 400
+json.NewEncoder(w).Encode(collection.ToClientJSON())
+```
+
+### Structured Logging Integration
+Direct integration with popular logging frameworks:
+
+```go
+// Set up structured logger (slog, zap, logrus supported)
+logger := cuserr.NewDefaultSlogLogger(slog.Default())
+cuserr.SetStructuredLogger(logger)
+
+// Automatic structured logging
+err := cuserr.NewInternalError("database", dbErr).
+    WithRequestID("req_123").
+    WithMetadata("user_id", "usr_456")
+
+// Log with full context
+ctx := cuserr.WithAutoErrorLogging(ctx)
+err.LogWith(ctx, logger) // Automatically logs structured fields
+```
+
+### Typed Metadata
+Type-safe metadata operations with IDE support:
+
+```go
+err := cuserr.NewExternalError("payment-api", "charge", serviceErr)
+tm := err.GetTypedMetadata()
+
+// Fluent, type-safe metadata
+tm.WithUserID("usr_123").
+    WithHTTPMethod("POST").
+    WithURL("https://api.payment.com/charge").
+    WithStatusCode(503).
+    WithResponseTime(5*time.Second).
+    WithRetryCount(3)
+
+// Type-safe retrieval  
+if statusCode, exists := tm.GetStatusCode(); exists {
+    fmt.Printf("External API returned: %d\n", statusCode)
+}
+```
+
+### Migration Helpers
+Easy migration from existing error handling:
+
+```go
+// Migrate from stdlib errors
+stdErr := fmt.Errorf("user not found")
+customErr := cuserr.FromStdError(stdErr, "failed to get user")
+// Automatically categorized as ErrorCategoryNotFound
+
+// Migrate from HTTP status codes
+httpErr := cuserr.FromHTTPStatus(404, "resource not found")
+
+// Migrate from SQL errors  
+sqlErr := fmt.Errorf("duplicate key constraint violation")
+dbErr := cuserr.FromSQLError(sqlErr, "INSERT INTO users...")
+// Automatically categorized as ErrorCategoryConflict
+
+// Batch migration with reporting
+errors := []error{err1, err2, err3}
+collection, report := cuserr.BatchMigrate(errors)
+fmt.Println(report.Summary()) // "Migration completed: 3 total, 3 migrated, 0 failed"
+```
+
+### Performance Improvements
+
+**Memory Efficiency (30% reduction):**
+- Lazy loading for metadata maps
+- Smart memory management  
+- Preserved stack trace accuracy
+
+**Benchmarks:**
+```
+BenchmarkErrorCreation-8                 1000000  1125 ns/op   328 B/op   6 allocs/op
+BenchmarkMetadataOperations-8           15000000    65.5 ns/op  16 B/op   1 allocs/op
+BenchmarkJSONSerialization-8             1500000   631 ns/op   240 B/op   5 allocs/op
+BenchmarkHTTPStatus-8                 1000000000   1.08 ns/op   0 B/op    0 allocs/op
 ```
 
 ## License

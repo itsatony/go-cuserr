@@ -53,6 +53,8 @@ type CustomError struct {
 	Timestamp time.Time `json:"timestamp"`
 	// StackTrace for debugging (not serialized to JSON)
 	stackTrace []StackFrame
+	// stackTraceCleared tracks if stack trace was explicitly cleared
+	stackTraceCleared bool
 	// Wrapped is the underlying error
 	Wrapped error `json:"-"`
 	// Sentinel is the base error for categorization

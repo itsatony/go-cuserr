@@ -74,7 +74,7 @@ func (e *CustomError) DetailedError() string {
 		sb.WriteString("\n")
 	}
 
-	// Add stack trace if available (thread-safe access)
+	// Add stack trace if available
 	e.mu.RLock()
 	stackTrace := make([]StackFrame, len(e.stackTrace))
 	copy(stackTrace, e.stackTrace)
@@ -166,6 +166,7 @@ func (e *CustomError) WithStackTrace(frames []StackFrame) *CustomError {
 	// Make a copy to prevent external modification
 	e.stackTrace = make([]StackFrame, len(frames))
 	copy(e.stackTrace, frames)
+	e.stackTraceCleared = false // Reset cleared flag when manually setting
 	return e
 }
 
@@ -175,5 +176,6 @@ func (e *CustomError) ClearStackTrace() *CustomError {
 	defer e.mu.Unlock()
 
 	e.stackTrace = nil
+	e.stackTraceCleared = true // Mark as explicitly cleared
 	return e
 }
