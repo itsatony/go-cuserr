@@ -51,7 +51,7 @@ const (
 	CATEGORY_EXTERNAL = "external"
 
 	// Sentinel error message constants
-	
+
 	// SENTINEL_MSG_NOT_FOUND represents default message for not found errors
 	SENTINEL_MSG_NOT_FOUND = "resource not found"
 	// SENTINEL_MSG_ALREADY_EXISTS represents default message for conflict errors
