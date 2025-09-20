@@ -30,15 +30,25 @@ const (
 	ERROR_CODE_INTERNAL_ERROR = "INTERNAL_ERROR"
 
 	// Error category string constants
-	CATEGORY_VALIDATION   = "validation"
-	CATEGORY_NOT_FOUND    = "not_found"
-	CATEGORY_CONFLICT     = "conflict"
+
+	// CATEGORY_VALIDATION represents input validation error category
+	CATEGORY_VALIDATION = "validation"
+	// CATEGORY_NOT_FOUND represents resource not found error category
+	CATEGORY_NOT_FOUND = "not_found"
+	// CATEGORY_CONFLICT represents resource conflict error category
+	CATEGORY_CONFLICT = "conflict"
+	// CATEGORY_UNAUTHORIZED represents authentication error category
 	CATEGORY_UNAUTHORIZED = "unauthorized"
-	CATEGORY_FORBIDDEN    = "forbidden"
-	CATEGORY_INTERNAL     = "internal"
-	CATEGORY_TIMEOUT      = "timeout"
-	CATEGORY_RATE_LIMIT   = "rate_limit"
-	CATEGORY_EXTERNAL     = "external"
+	// CATEGORY_FORBIDDEN represents authorization error category
+	CATEGORY_FORBIDDEN = "forbidden"
+	// CATEGORY_INTERNAL represents internal server error category
+	CATEGORY_INTERNAL = "internal"
+	// CATEGORY_TIMEOUT represents operation timeout error category
+	CATEGORY_TIMEOUT = "timeout"
+	// CATEGORY_RATE_LIMIT represents rate limiting error category
+	CATEGORY_RATE_LIMIT = "rate_limit"
+	// CATEGORY_EXTERNAL represents external service error category
+	CATEGORY_EXTERNAL = "external"
 
 	// Sentinel error message constants
 	SENTINEL_MSG_NOT_FOUND      = "resource not found"
