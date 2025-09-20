@@ -51,15 +51,25 @@ const (
 	CATEGORY_EXTERNAL = "external"
 
 	// Sentinel error message constants
-	SENTINEL_MSG_NOT_FOUND      = "resource not found"
+	
+	// SENTINEL_MSG_NOT_FOUND represents default message for not found errors
+	SENTINEL_MSG_NOT_FOUND = "resource not found"
+	// SENTINEL_MSG_ALREADY_EXISTS represents default message for conflict errors
 	SENTINEL_MSG_ALREADY_EXISTS = "resource already exists"
-	SENTINEL_MSG_INVALID_INPUT  = "invalid input"
-	SENTINEL_MSG_UNAUTHORIZED   = "unauthorized"
-	SENTINEL_MSG_FORBIDDEN      = "forbidden"
-	SENTINEL_MSG_INTERNAL       = "internal error"
-	SENTINEL_MSG_TIMEOUT        = "operation timeout"
-	SENTINEL_MSG_RATE_LIMIT     = "rate limit exceeded"
-	SENTINEL_MSG_EXTERNAL       = "external service error"
+	// SENTINEL_MSG_INVALID_INPUT represents default message for validation errors
+	SENTINEL_MSG_INVALID_INPUT = "invalid input"
+	// SENTINEL_MSG_UNAUTHORIZED represents default message for authentication errors
+	SENTINEL_MSG_UNAUTHORIZED = "unauthorized"
+	// SENTINEL_MSG_FORBIDDEN represents default message for authorization errors
+	SENTINEL_MSG_FORBIDDEN = "forbidden"
+	// SENTINEL_MSG_INTERNAL represents default message for internal errors
+	SENTINEL_MSG_INTERNAL = "internal error"
+	// SENTINEL_MSG_TIMEOUT represents default message for timeout errors
+	SENTINEL_MSG_TIMEOUT = "operation timeout"
+	// SENTINEL_MSG_RATE_LIMIT represents default message for rate limit errors
+	SENTINEL_MSG_RATE_LIMIT = "rate limit exceeded"
+	// SENTINEL_MSG_EXTERNAL represents default message for external service errors
+	SENTINEL_MSG_EXTERNAL = "external service error"
 
 	// Stack trace configuration constants
 	DEFAULT_STACK_DEPTH = 10
