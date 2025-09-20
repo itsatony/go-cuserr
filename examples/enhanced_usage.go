@@ -30,8 +30,10 @@ func mainEnhanced() {
 	demonstrateErrorBuilders()
 }
 
-// Uncomment to run enhanced examples
-// func main() { mainEnhanced() }
+// main runs the enhanced examples demonstration  
+func main() { 
+	mainEnhanced() 
+}
 
 // demonstrateConvenienceConstructors shows the new convenience constructor functions
 func demonstrateConvenienceConstructors() {

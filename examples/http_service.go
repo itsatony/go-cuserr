@@ -442,3 +442,8 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 		"timestamp": "now",
 	})
 }
+
+// main starts the HTTP service example
+func main() {
+	runHTTPServiceDemo()
+}

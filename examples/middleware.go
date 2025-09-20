@@ -439,3 +439,8 @@ func runMiddlewareDemo() {
 
 	log.Fatal(http.ListenAndServe(":8081", finalMux))
 }
+
+// main starts the middleware integration demo
+func main() {
+	runMiddlewareDemo()
+}
