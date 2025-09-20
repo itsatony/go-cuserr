@@ -1,4 +1,5 @@
 // Package main demonstrates basic usage patterns of the cuserr package
+//go:build basic
 package main
 
 import (

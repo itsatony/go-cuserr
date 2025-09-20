@@ -1,4 +1,5 @@
 // Package main demonstrates middleware integration with cuserr
+//go:build middleware
 package main
 
 import (

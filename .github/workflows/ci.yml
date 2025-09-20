@@ -210,18 +210,21 @@ jobs:
       run: go mod download
 
     - name: Test basic usage example
-      run: timeout 10s go run examples/basic_usage.go || [ $? -eq 124 ]
+      run: timeout 10s go run -tags basic examples/basic_usage.go || [ $? -eq 124 ]
 
     - name: Build HTTP service example
-      run: go build -o http_service examples/http_service.go
+      run: go build -tags http_service -o http_service examples/http_service.go
 
     - name: Build middleware example
-      run: go build -o middleware examples/middleware.go
+      run: go build -tags middleware -o middleware examples/middleware.go
+      
+    - name: Build enhanced usage example
+      run: go build -tags enhanced -o enhanced_usage examples/enhanced_usage.go
 
     - name: Verify examples compile
       run: |
         echo "✅ All examples compile successfully"
-        ls -la http_service middleware
+        ls -la http_service middleware enhanced_usage
 
   # Performance regression check
   performance:

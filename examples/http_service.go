@@ -1,4 +1,5 @@
 // Package main demonstrates HTTP service integration with cuserr
+//go:build http_service
 package main
 
 import (
