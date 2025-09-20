@@ -11,9 +11,13 @@ import (
 type LogLevel int
 
 const (
+	// LogLevelDebug represents debug level logging for detailed information
 	LogLevelDebug LogLevel = iota
+	// LogLevelInfo represents info level logging for general information
 	LogLevelInfo
+	// LogLevelWarn represents warning level logging for concerning events
 	LogLevelWarn
+	// LogLevelError represents error level logging for error conditions
 	LogLevelError
 )
 

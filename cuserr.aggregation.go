@@ -448,16 +448,16 @@ func ValidateRequired(field, value string, collection *ErrorCollection) {
 }
 
 // ValidateLength checks field length constraints
-func ValidateLength(field, value string, min, max int, collection *ErrorCollection) {
+func ValidateLength(field, value string, minLength, maxLength int, collection *ErrorCollection) {
 	length := len(value)
-	if length < min {
+	if length < minLength {
 		collection.AddValidationWithCode(field,
-			fmt.Sprintf("%s must be at least %d characters", field, min),
+			fmt.Sprintf("%s must be at least %d characters", field, minLength),
 			"TOO_SHORT")
 	}
-	if max > 0 && length > max {
+	if maxLength > 0 && length > maxLength {
 		collection.AddValidationWithCode(field,
-			fmt.Sprintf("%s must be at most %d characters", field, max),
+			fmt.Sprintf("%s must be at least %d characters", field, maxLength),
 			"TOO_LONG")
 	}
 }

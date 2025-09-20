@@ -135,7 +135,7 @@ func TestHTTPIntegrationEndToEnd(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Create request
-			req := httptest.NewRequest("GET", tc.path, nil)
+			req := httptest.NewRequest(http.MethodGet, tc.path, nil)
 			req.Header.Set("X-Request-ID", "req-integration-test")
 
 			// Create response recorder
@@ -322,7 +322,7 @@ func TestHTTPMiddlewarePattern(t *testing.T) {
 
 	// Test normal operation
 	t.Run("Normal Operation", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/test", nil)
+		req := httptest.NewRequest(http.MethodGet, "/test", nil)
 		w := httptest.NewRecorder()
 
 		wrappedHandler(w, req)
@@ -338,7 +338,7 @@ func TestHTTPMiddlewarePattern(t *testing.T) {
 
 	// Test panic recovery
 	t.Run("Panic Recovery", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/test?panic=true", nil)
+		req := httptest.NewRequest(http.MethodGet, "/test?panic=true", nil)
 		req.Header.Set("X-Request-ID", "req-panic-test")
 		w := httptest.NewRecorder()
 
@@ -366,7 +366,8 @@ func TestHTTPMiddlewarePattern(t *testing.T) {
 
 		// Verify panic information is captured
 		metadata := errorData["metadata"].(map[string]interface{})
-		if panicValue, exists := metadata["panic"]; !exists || !strings.Contains(panicValue.(string), "something went wrong") {
+		panicValue, exists := metadata["panic"]
+		if !exists || !strings.Contains(panicValue.(string), "something went wrong") {
 			t.Error("Should capture panic information in metadata")
 		}
 	})

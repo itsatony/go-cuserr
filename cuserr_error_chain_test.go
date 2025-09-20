@@ -3,6 +3,7 @@ package cuserr
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
 )
@@ -22,7 +23,7 @@ func TestErrorChainIntegrity(t *testing.T) {
 
 	apiErr := NewCustomError(ErrInternal, serviceErr, "API request failed").
 		WithMetadata("endpoint", "/api/users/123").
-		WithMetadata("method", "GET").
+		WithMetadata("method", http.MethodGet).
 		WithRequestID("req-chain-test")
 
 	// Test error chain integrity

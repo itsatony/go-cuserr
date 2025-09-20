@@ -89,11 +89,11 @@ func (e *CustomError) GetAllMetadata() map[string]string {
 	}
 
 	// Return a copy to prevent external modification
-	copy := make(map[string]string)
+	copyMap := make(map[string]string)
 	for k, v := range e.metadata {
-		copy[k] = v
+		copyMap[k] = v
 	}
-	return copy
+	return copyMap
 }
 
 // WithRequestID adds request ID for tracing

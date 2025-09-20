@@ -2,8 +2,11 @@ package cuserr
 
 const (
 	// Package information constants
-	PACKAGE_NAME    = "cuserr"
-	PACKAGE_VERSION = "0.1.0"
+	
+	// PACKAGE_NAME defines the name of the cuserr package
+	PACKAGE_NAME = "cuserr"
+	// PACKAGE_VERSION defines the current version of the cuserr package
+	PACKAGE_VERSION = "0.2.0"
 
 	// Error codes for consistent identification
 	ERROR_CODE_NOT_FOUND      = "NOT_FOUND"

@@ -474,7 +474,9 @@ func TestProductionSecurityFiltering(t *testing.T) {
 					if clientMessage == tc.message {
 						t.Errorf("Sensitive message should be filtered: %s", tc.message)
 					}
-					if !strings.Contains(clientMessage, "error occurred") && !strings.Contains(clientMessage, "temporarily unavailable") {
+					hasErrorOccurred := strings.Contains(clientMessage, "error occurred")
+					hasUnavailable := strings.Contains(clientMessage, "temporarily unavailable")
+					if !hasErrorOccurred && !hasUnavailable {
 						t.Errorf("Filtered message should be generic: %s", clientMessage)
 					}
 				} else {
@@ -507,10 +509,8 @@ func TestConfigurationValidation(t *testing.T) {
 		if config.MaxStackDepth < 0 {
 			// If the package allows negative values, it should handle them gracefully
 			stackTrace := err.GetStackTrace()
-			// Should either use default depth or handle gracefully
-			if len(stackTrace) < 0 {
-				t.Error("Stack trace length should not be negative")
-			}
+			// Should handle gracefully (len() is always >= 0, so just verify it works)
+			_ = len(stackTrace) // Function should not panic with negative config
 		}
 	})
 
