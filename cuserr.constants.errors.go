@@ -9,7 +9,10 @@ const (
 	PACKAGE_VERSION = "0.2.0"
 
 	// Error codes for consistent identification
-	ERROR_CODE_NOT_FOUND      = "NOT_FOUND"
+
+	// ERROR_CODE_NOT_FOUND represents resource not found errors
+	ERROR_CODE_NOT_FOUND = "NOT_FOUND"
+	// ERROR_CODE_ALREADY_EXISTS represents resource conflict/duplicate errors
 	ERROR_CODE_ALREADY_EXISTS = "ALREADY_EXISTS"
 	ERROR_CODE_INVALID_INPUT  = "INVALID_INPUT"
 	ERROR_CODE_UNAUTHORIZED   = "UNAUTHORIZED"
