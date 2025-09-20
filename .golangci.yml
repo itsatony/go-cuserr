@@ -5,10 +5,7 @@ run:
 linters:
   enable:
     - errcheck
-    - gosimple
     - govet
-    - ineffassign
-    - staticcheck
     - typecheck
     - unused
     - asasalint
@@ -17,23 +14,17 @@ linters:
     - bodyclose
     - containedctx
     - contextcheck
-    - cyclop
     - dupl
     - durationcheck
-    - errname
-    - errorlint
     - execinquery
     - exhaustive
     - exportloopref
-    - forbidigo
     - funlen
     - gochecknoglobals
     - gochecknoinits
     - gocognit
     - goconst
-    - gocritic
     - gocyclo
-    - godot
     - goimports
     - gomnd
     - gomoddirectives
@@ -44,7 +35,6 @@ linters:
     - makezero
     - misspell
     - nakedret
-    - nestif
     - nilerr
     - nilnil
     - noctx
@@ -55,15 +45,11 @@ linters:
     - revive
     - rowserrcheck
     - sqlclosecheck
-    - stylecheck
-    - tenv
     - testpackage
     - thelper
     - tparallel
     - unconvert
-    - unparam
     - usestdlibvars
-    - wastedassign
     - whitespace
   
   disable:
@@ -77,7 +63,7 @@ linters:
     - gosimple     # Some patterns are intentionally verbose for clarity
     - ineffassign  # Test patterns may have intentional assignments
     - nestif       # Complex nesting sometimes necessary
-    - staticcheck  # SA1029 conflicts with context usage patterns
+  # SA1029 conflicts with context usage patterns
     - stylecheck   # ST1003 conflicts with vAI ALL_CAPS standards
     - tenv         # Deprecated and conflicts with test patterns
     - unparam      # Parameters may be unused in interface implementations
