@@ -14,12 +14,19 @@ const (
 	ERROR_CODE_NOT_FOUND = "NOT_FOUND"
 	// ERROR_CODE_ALREADY_EXISTS represents resource conflict/duplicate errors
 	ERROR_CODE_ALREADY_EXISTS = "ALREADY_EXISTS"
-	ERROR_CODE_INVALID_INPUT  = "INVALID_INPUT"
-	ERROR_CODE_UNAUTHORIZED   = "UNAUTHORIZED"
-	ERROR_CODE_FORBIDDEN      = "FORBIDDEN"
-	ERROR_CODE_TIMEOUT        = "TIMEOUT"
-	ERROR_CODE_RATE_LIMIT     = "RATE_LIMIT"
+	// ERROR_CODE_INVALID_INPUT represents validation and input errors
+	ERROR_CODE_INVALID_INPUT = "INVALID_INPUT"
+	// ERROR_CODE_UNAUTHORIZED represents authentication errors
+	ERROR_CODE_UNAUTHORIZED = "UNAUTHORIZED"
+	// ERROR_CODE_FORBIDDEN represents authorization errors
+	ERROR_CODE_FORBIDDEN = "FORBIDDEN"
+	// ERROR_CODE_TIMEOUT represents operation timeout errors
+	ERROR_CODE_TIMEOUT = "TIMEOUT"
+	// ERROR_CODE_RATE_LIMIT represents rate limiting errors
+	ERROR_CODE_RATE_LIMIT = "RATE_LIMIT"
+	// ERROR_CODE_EXTERNAL_ERROR represents external service errors
 	ERROR_CODE_EXTERNAL_ERROR = "EXTERNAL_ERROR"
+	// ERROR_CODE_INTERNAL_ERROR represents internal server errors
 	ERROR_CODE_INTERNAL_ERROR = "INTERNAL_ERROR"
 
 	// Error category string constants
