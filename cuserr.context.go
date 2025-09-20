@@ -1,3 +1,5 @@
+// Package cuserr provides context-based error configuration and handling.
+// This file contains context-aware error creation and configuration utilities.
 package cuserr
 
 import (

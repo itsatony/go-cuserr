@@ -1,3 +1,5 @@
+// Package cuserr provides convenience constructors for common error patterns.
+// This file contains simplified constructors that reduce boilerplate code.
 package cuserr
 
 import (

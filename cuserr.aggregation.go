@@ -1,3 +1,5 @@
+// Package cuserr provides error aggregation and collection functionality.
+// This file contains utilities for collecting and managing multiple errors.
 package cuserr
 
 import (
@@ -223,10 +225,10 @@ func (ec *ErrorCollection) ToCustomError() *CustomError {
 		err.WithRequestID(ec.RequestID)
 	}
 
-	// Add error counts to metadata
-	err.WithMetadata("error_count", fmt.Sprintf("%d", len(ec.Errors)))
-	err.WithMetadata("validation_error_count", fmt.Sprintf("%d", len(ec.ValidationErrors)))
-	err.WithMetadata("total_error_count", fmt.Sprintf("%d", ec.Count()))
+	// Add error counts to metadata (fluent API - ignoring return values)
+	_ = err.WithMetadata("error_count", fmt.Sprintf("%d", len(ec.Errors)))
+	_ = err.WithMetadata("validation_error_count", fmt.Sprintf("%d", len(ec.ValidationErrors)))
+	_ = err.WithMetadata("total_error_count", fmt.Sprintf("%d", ec.Count()))
 
 	// Add context metadata
 	for key, value := range ec.Context {

@@ -1,7 +1,6 @@
 package cuserr
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -188,39 +187,3 @@ func GetErrorMetadata(err error, key string) (string, bool) {
 	return "", false
 }
 
-// ensureStackTrace captures stack trace if enabled and not already captured
-// This implements lazy loading for stack traces
-func (e *CustomError) ensureStackTrace() {
-	config := GetConfig()
-	if !config.EnableStackTrace {
-		return
-	}
-
-	e.mu.Lock()
-	defer e.mu.Unlock()
-
-	// Don't capture if explicitly cleared or already captured
-	if e.stackTraceCleared || e.stackTrace != nil {
-		return
-	}
-
-	e.stackTrace = captureStackTrace(STACK_SKIP_FRAMES + 1) // +1 for this method
-}
-
-// ensureStackTraceWithContext captures stack trace using context-based configuration
-func (e *CustomError) ensureStackTraceWithContext(ctx context.Context) {
-	config := GetConfigFromContext(ctx)
-	if !config.EnableStackTrace {
-		return
-	}
-
-	e.mu.Lock()
-	defer e.mu.Unlock()
-
-	// Don't capture if explicitly cleared or already captured
-	if e.stackTraceCleared || e.stackTrace != nil {
-		return
-	}
-
-	e.stackTrace = captureStackTrace(STACK_SKIP_FRAMES + 1) // +1 for this method
-}
