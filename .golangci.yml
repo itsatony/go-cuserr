@@ -116,6 +116,7 @@ issues:
     - "parameter.*seems to be unused.*consider removing"
     # Allow global variables for configuration
     - "globalStructuredLogger is a global variable"
+    - "globalStructuredLoggerMu is a global variable"
     - "globalConfig is a global variable"
     - "globalConfigMu is a global variable"
     # Allow package comments to be flexible
