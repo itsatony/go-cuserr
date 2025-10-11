@@ -26,7 +26,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.21'
+        go-version: '1.23'
         check-latest: true
 
     - name: Cache Go modules
@@ -71,6 +71,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         go-version: ['1.21', '1.22', '1.23']
+        # Note: Skipping Go 1.24.0-1.24.3 due to CVE GO-2025-3750 (Windows only)
+        # Will add 1.24.4+ when available
     runs-on: ${{ matrix.os }}
     
     steps:
@@ -106,7 +108,7 @@ jobs:
     - name: Run benchmarks (smoke test)
       run: go test -bench=. -benchtime=100ms -run=^$ ./...
 
-  # Coverage job (only on Ubuntu with Go 1.21)
+  # Coverage job (only on Ubuntu with Go 1.23)
   coverage:
     name: Coverage
     needs: quality
@@ -118,7 +120,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.21'
+        go-version: '1.23'
         check-latest: true
 
     - name: Cache Go modules
@@ -171,7 +173,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.21'
+        go-version: '1.23'
         check-latest: true
 
     - name: Run gosec security scanner
@@ -192,7 +194,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.21'
+        go-version: '1.23'
         check-latest: true
 
     - name: Cache Go modules
@@ -238,7 +240,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.21'
+        go-version: '1.23'
         check-latest: true
 
     - name: Cache Go modules
@@ -280,7 +282,7 @@ jobs:
           - goos: windows
             goarch: arm64
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -288,7 +290,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.21'
+        go-version: '1.23'
         check-latest: true
 
     - name: Cache Go modules
