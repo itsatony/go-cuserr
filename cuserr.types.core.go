@@ -59,6 +59,8 @@ type CustomError struct {
 	Wrapped error `json:"-"`
 	// Sentinel is the base error for categorization
 	Sentinel error `json:"-"`
+	// logger is the optional logger for this error (injected via options)
+	logger Logger
 	// mu protects metadata and stackTrace access for thread safety
 	mu sync.RWMutex
 }

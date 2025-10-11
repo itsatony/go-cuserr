@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sync"
 	"time"
 )
 
@@ -249,15 +250,23 @@ func (ec *ErrorCollection) LogWith(ctx context.Context, logger StructuredLogger)
 }
 
 // Global structured logger instance
-var globalStructuredLogger StructuredLogger
+var (
+	globalStructuredLogger   StructuredLogger
+	globalStructuredLoggerMu sync.RWMutex
+)
 
 // SetStructuredLogger sets the global structured logger
 func SetStructuredLogger(logger StructuredLogger) {
+	globalStructuredLoggerMu.Lock()
+	defer globalStructuredLoggerMu.Unlock()
 	globalStructuredLogger = logger
 }
 
 // GetStructuredLogger returns the global structured logger
 func GetStructuredLogger() StructuredLogger {
+	globalStructuredLoggerMu.Lock()
+	defer globalStructuredLoggerMu.Unlock()
+
 	if globalStructuredLogger == nil {
 		// Initialize with default slog logger if not set
 		globalStructuredLogger = NewDefaultSlogLogger(nil)

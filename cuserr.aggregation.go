@@ -457,7 +457,7 @@ func ValidateLength(field, value string, minLength, maxLength int, collection *E
 	}
 	if maxLength > 0 && length > maxLength {
 		collection.AddValidationWithCode(field,
-			fmt.Sprintf("%s must be at least %d characters", field, maxLength),
+			fmt.Sprintf("%s must be at most %d characters", field, maxLength),
 			"TOO_LONG")
 	}
 }

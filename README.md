@@ -45,6 +45,40 @@ func main() {
 
 **That's it!** Three lines for production-ready error handling with HTTP integration.
 
+## 🆕 v0.3.0: Logger Injection & Options Pattern
+
+**Modern, injectable logging - bring your own logger!**
+
+```go
+import (
+    "log/slog"
+    "github.com/itsatony/go-cuserr"
+    "github.com/itsatony/go-cuserr/adapters"
+)
+
+// Set up your logger (slog, Zap, or Zerolog)
+logger := adapters.NewSlogAdapter(slog.Default())
+
+// Inject logger via options pattern
+err := cuserr.NewInternalError("database", dbErr,
+    cuserr.WithLogger(logger),           // Inject your logger
+    cuserr.WithContext(ctx),             // Auto-extract request_id, user_id, trace_id
+    cuserr.WithMetadata("query", sql),   // Add custom metadata
+)
+
+// Log when you want (uses injected logger)
+err.Log(ctx)  // Outputs structured JSON with all error context
+```
+
+**Supported loggers:**
+- ✅ **slog** (Go 1.21+ standard library) - `adapters.NewSlogAdapter()`
+- ✅ **Zap** (Uber's blazing-fast logger) - `adapters.NewZapAdapter()`
+- ✅ **Zerolog** (Zero-allocation logger) - `adapters.NewZerologAdapter()`
+
+**Library-friendly:** Errors work perfectly without loggers! No forced dependencies.
+
+[See full example →](examples/modern_api_usage.go)
+
 ## Common Patterns
 
 Need more? Pick your use case:
@@ -94,8 +128,9 @@ json.NewEncoder(w).Encode(collection.ToClientJSON())
 
 ## Examples
 
+- **[Modern API Usage](examples/modern_api_usage.go)** - **NEW v0.3.0**: Logger injection & options pattern
 - **[Basic Usage](examples/basic_usage.go)** - Error creation and handling fundamentals
-- **[HTTP Service](examples/http_service.go)** - Complete REST API with error handling  
+- **[HTTP Service](examples/http_service.go)** - Complete REST API with error handling
 - **[Middleware](examples/middleware.go)** - Request tracing, auth, rate limiting
 - **[Enhanced Features](examples/enhanced_usage.go)** - v0.2.0+ advanced patterns
 
@@ -536,23 +571,56 @@ w.WriteHeader(collection.ToHTTPStatus()) // 400
 json.NewEncoder(w).Encode(collection.ToClientJSON())
 ```
 
-### Structured Logging Integration
-Direct integration with popular logging frameworks:
+### 🆕 v0.3.0: Options Pattern & Logger Injection
+
+**Modern dependency injection following Go best practices:**
 
 ```go
-// Set up structured logger (slog, zap, logrus supported)
-logger := cuserr.NewDefaultSlogLogger(slog.Default())
-cuserr.SetStructuredLogger(logger)
+import (
+    "github.com/itsatony/go-cuserr"
+    "github.com/itsatony/go-cuserr/adapters"
+)
 
-// Automatic structured logging
-err := cuserr.NewInternalError("database", dbErr).
-    WithRequestID("req_123").
-    WithMetadata("user_id", "usr_456")
+// Available options:
+// - WithLogger(logger)      // Inject your logger
+// - WithContext(ctx)         // Auto-extract request_id, user_id, trace_id
+// - WithMetadata(k, v)       // Add custom metadata
+// - WithRequestID(id)        // Set request ID
+// - WithStack(skip)          // Explicitly capture stack trace
+// - WithoutStack()           // Disable stack trace
 
-// Log with full context
-ctx := cuserr.WithAutoErrorLogging(ctx)
-err.LogWith(ctx, logger) // Automatically logs structured fields
+// Example: Service layer with logger injection
+type UserService struct {
+    logger cuserr.Logger
+}
+
+func (s *UserService) GetUser(ctx context.Context, id string) (*User, error) {
+    user, err := s.db.FindUser(id)
+    if err != nil {
+        // Create error with all options
+        return nil, cuserr.NewInternalError("database", err,
+            cuserr.WithContext(ctx),           // Auto-extracts context values
+            cuserr.WithLogger(s.logger),       // Inject service logger
+            cuserr.WithMetadata("user_id", id), // Add custom metadata
+        )
+    }
+    return user, nil
+}
+
+// Supported logger adapters:
+logger := adapters.NewSlogAdapter(slog.Default())     // Go 1.21+ stdlib
+logger := adapters.NewZapAdapter(zapLogger)           // Uber Zap
+logger := adapters.NewZerologAdapter(zerologLogger)   // Zerolog
+
+// Log when you want
+err.Log(ctx)  // Uses injected logger, outputs structured JSON
 ```
+
+**Benefits:**
+- ✅ **No global state** - Proper dependency injection
+- ✅ **Library-friendly** - Works without logger (NoOpLogger default)
+- ✅ **Composable** - Mix and match options as needed
+- ✅ **Zero-cost** - No logger = no logging overhead
 
 ### Typed Metadata
 Type-safe metadata operations with IDE support:

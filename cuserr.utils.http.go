@@ -101,7 +101,8 @@ func (e *CustomError) ToJSONString() string {
 // ClientSafeMessage returns a safe message for client consumption
 // In production mode, it may hide sensitive error details
 func (e *CustomError) ClientSafeMessage() string {
-	if globalConfig.ProductionMode {
+	config := GetConfig()
+	if config.ProductionMode {
 		// In production, return generic messages for internal errors
 		switch e.Category {
 		case ErrorCategoryInternal:
@@ -120,7 +121,8 @@ func (e *CustomError) ToClientJSON() map[string]interface{} {
 	metadata := e.GetAllMetadata() // Thread-safe metadata access
 
 	// Filter sensitive metadata in production
-	if globalConfig.ProductionMode {
+	config := GetConfig()
+	if config.ProductionMode {
 		filteredMetadata := make(map[string]string)
 		for k, v := range metadata {
 			// Only include non-sensitive metadata keys

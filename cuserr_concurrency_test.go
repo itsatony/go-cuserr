@@ -305,3 +305,85 @@ func BenchmarkConcurrentErrorCreation(b *testing.B) {
 		}
 	})
 }
+
+// TestConcurrentLoggerAccess tests thread-safe global logger operations
+// This test verifies the fix for the race condition in global logger access
+func TestConcurrentLoggerAccess(t *testing.T) {
+	// Save original logger and restore after test
+	originalLogger := GetStructuredLogger()
+	defer SetStructuredLogger(originalLogger)
+
+	const numGoroutines = 100
+	var wg sync.WaitGroup
+
+	// Test concurrent SetStructuredLogger and GetStructuredLogger
+	wg.Add(numGoroutines * 2)
+
+	// Start logger setters
+	for i := 0; i < numGoroutines; i++ {
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 10; j++ {
+				logger := NewDefaultSlogLogger(nil)
+				SetStructuredLogger(logger)
+				time.Sleep(time.Microsecond)
+			}
+		}()
+	}
+
+	// Start logger getters (with lazy initialization)
+	for i := 0; i < numGoroutines; i++ {
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 10; j++ {
+				logger := GetStructuredLogger()
+				if logger == nil {
+					t.Error("GetStructuredLogger should never return nil")
+					return
+				}
+				time.Sleep(time.Microsecond)
+			}
+		}()
+	}
+
+	wg.Wait()
+
+	// Verify logger is still valid
+	finalLogger := GetStructuredLogger()
+	if finalLogger == nil {
+		t.Error("Final logger should not be nil")
+	}
+}
+
+// TestConcurrentLoggerAccessWithNilInitialization tests lazy initialization is thread-safe
+func TestConcurrentLoggerAccessWithNilInitialization(t *testing.T) {
+	// Temporarily set logger to nil to test lazy initialization
+	originalLogger := GetStructuredLogger()
+	defer SetStructuredLogger(originalLogger)
+
+	SetStructuredLogger(nil)
+
+	const numGoroutines = 50
+	var wg sync.WaitGroup
+	wg.Add(numGoroutines)
+
+	// Multiple goroutines simultaneously call GetStructuredLogger when it's nil
+	// This should safely initialize it exactly once
+	for i := 0; i < numGoroutines; i++ {
+		go func() {
+			defer wg.Done()
+			logger := GetStructuredLogger()
+			if logger == nil {
+				t.Error("GetStructuredLogger with nil global logger should initialize and return non-nil")
+			}
+		}()
+	}
+
+	wg.Wait()
+
+	// Verify logger was initialized
+	logger := GetStructuredLogger()
+	if logger == nil {
+		t.Error("Logger should have been initialized")
+	}
+}

@@ -25,7 +25,7 @@ func NewValidationErrorf(field, format string, args ...interface{}) *CustomError
 }
 
 // NewNotFoundError creates a not found error for a specific resource
-func NewNotFoundError(resource, id string) *CustomError {
+func NewNotFoundError(resource, id string, opts ...Option) *CustomError {
 	message := fmt.Sprintf("%s not found", resource)
 	if id != "" {
 		message = fmt.Sprintf("%s with id '%s' not found", resource, id)
@@ -37,6 +37,11 @@ func NewNotFoundError(resource, id string) *CustomError {
 
 	if id != "" {
 		err.WithMetadata("resource_id", id)
+	}
+
+	// Apply options
+	for _, opt := range opts {
+		opt(err)
 	}
 
 	return err
@@ -101,7 +106,7 @@ func NewConflictError(resource, field, value string) *CustomError {
 }
 
 // NewInternalError creates an internal error with optional component context
-func NewInternalError(component string, wrapped error) *CustomError {
+func NewInternalError(component string, wrapped error, opts ...Option) *CustomError {
 	message := "internal server error"
 	if component != "" {
 		message = fmt.Sprintf("internal error in %s", component)
@@ -114,11 +119,16 @@ func NewInternalError(component string, wrapped error) *CustomError {
 		err.WithMetadata("component", component)
 	}
 
+	// Apply options
+	for _, opt := range opts {
+		opt(err)
+	}
+
 	return err
 }
 
 // NewExternalError creates an external service error
-func NewExternalError(service, operation string, wrapped error) *CustomError {
+func NewExternalError(service, operation string, wrapped error, opts ...Option) *CustomError {
 	message := "external service error"
 	if service != "" {
 		message = fmt.Sprintf("external service '%s' error", service)
@@ -132,6 +142,11 @@ func NewExternalError(service, operation string, wrapped error) *CustomError {
 	}
 	if operation != "" {
 		err.WithMetadata("operation", operation)
+	}
+
+	// Apply options
+	for _, opt := range opts {
+		opt(err)
 	}
 
 	return err

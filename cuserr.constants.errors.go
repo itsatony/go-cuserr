@@ -6,7 +6,7 @@ const (
 	// PACKAGE_NAME defines the name of the cuserr package
 	PACKAGE_NAME = "cuserr"
 	// PACKAGE_VERSION defines the current version of the cuserr package
-	PACKAGE_VERSION = "0.2.0"
+	PACKAGE_VERSION = "0.3.0"
 
 	// Error codes for consistent identification
 
