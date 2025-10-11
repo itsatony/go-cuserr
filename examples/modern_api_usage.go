@@ -11,6 +11,14 @@ import (
 	"github.com/itsatony/go-cuserr/adapters"
 )
 
+// Define custom types for context keys to avoid collisions (Go best practice)
+type contextKey string
+
+const (
+	requestIDKey contextKey = "request_id"
+	userIDKey    contextKey = "user_id"
+)
+
 func main() {
 	fmt.Println("=== Modern go-cuserr API Demo ===")
 	fmt.Println()
@@ -73,18 +81,18 @@ func example3MultipleOptions() {
 	fmt.Println("Example 3: Multiple Options (Realistic Scenario)")
 	fmt.Println("------------------------------------------------")
 
-	// Simulate request context
+	// Simulate request context with proper typed keys
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, "request_id", "req-abc-123")
-	ctx = context.WithValue(ctx, "user_id", "usr-456")
+	ctx = context.WithValue(ctx, requestIDKey, "req-abc-123")
+	ctx = context.WithValue(ctx, userIDKey, "usr-456")
 
 	// Create logger
 	logger := adapters.NewSlogAdapter(slog.Default())
 
 	// Create error with all the bells and whistles
 	err := cuserr.NewExternalError("payment-service", "charge", fmt.Errorf("connection timeout"),
-		cuserr.WithContext(ctx),      // Extracts request_id, user_id, trace_id
-		cuserr.WithLogger(logger),     // Enables logging
+		cuserr.WithContext(ctx),   // Extracts request_id, user_id, trace_id
+		cuserr.WithLogger(logger), // Enables logging
 		cuserr.WithMetadata("amount", "99.99"),
 		cuserr.WithMetadata("currency", "USD"),
 		cuserr.WithMetadata("merchant_id", "merch-789"),
@@ -115,8 +123,8 @@ func example4ServicePattern() {
 	logger := adapters.NewSlogAdapter(slog.Default())
 	service := &UserService{logger: logger}
 
-	// Simulate request
-	ctx := context.WithValue(context.Background(), "request_id", "req-xyz-999")
+	// Simulate request with proper typed key
+	ctx := context.WithValue(context.Background(), requestIDKey, "req-xyz-999")
 
 	// Call service method
 	user, err := service.GetUser(ctx, "usr_404")

@@ -1,3 +1,4 @@
+//lint:file-ignore SA1029,SA1012 Test files use string context keys and intentionally test nil context handling
 package cuserr
 
 import (
@@ -19,7 +20,7 @@ func TestOptionsPattern(t *testing.T) {
 	})
 
 	t.Run("WithContext option extracts request_id", func(t *testing.T) {
-		ctx := context.WithValue(context.Background(), "request_id", "req-test-123")
+		ctx := context.WithValue(context.Background(), testKeyRequestID, "req-test-123")
 		err := NewInternalError("database", nil,
 			WithContext(ctx),
 		)
@@ -30,7 +31,7 @@ func TestOptionsPattern(t *testing.T) {
 	})
 
 	t.Run("WithContext option extracts user_id", func(t *testing.T) {
-		ctx := context.WithValue(context.Background(), "user_id", "user-456")
+		ctx := context.WithValue(context.Background(), testKeyUserID, "user-456")
 		err := NewInternalError("database", nil,
 			WithContext(ctx),
 		)
@@ -42,7 +43,7 @@ func TestOptionsPattern(t *testing.T) {
 	})
 
 	t.Run("WithContext option extracts trace_id", func(t *testing.T) {
-		ctx := context.WithValue(context.Background(), "trace_id", "trace-789")
+		ctx := context.WithValue(context.Background(), testKeyTraceID, "trace-789")
 		err := NewInternalError("database", nil,
 			WithContext(ctx),
 		)
@@ -114,8 +115,8 @@ func TestOptionsPattern(t *testing.T) {
 	})
 
 	t.Run("Multiple options composition", func(t *testing.T) {
-		ctx := context.WithValue(context.Background(), "request_id", "req-multi-test")
-		ctx = context.WithValue(ctx, "user_id", "user-multi")
+		ctx := context.WithValue(context.Background(), testKeyRequestID, "req-multi-test")
+		ctx = context.WithValue(ctx, testKeyUserID, "user-multi")
 		logger := &NoOpLogger{}
 
 		err := NewExternalError("payment-api", "charge", nil,
@@ -154,7 +155,8 @@ func TestOptionsPattern(t *testing.T) {
 	})
 
 	t.Run("WithContext handles nil context gracefully", func(t *testing.T) {
-		// Should not panic
+		// Should not panic - intentionally testing nil handling
+		//nolint:SA1012 // Testing nil context handling is intentional
 		err := NewInternalError("database", nil,
 			WithContext(nil),
 		)
@@ -192,7 +194,7 @@ func TestLoggerMethods(t *testing.T) {
 	})
 
 	t.Run("toLogFields extracts error fields", func(t *testing.T) {
-		ctx := context.WithValue(context.Background(), "request_id", "req-log-test")
+		ctx := context.WithValue(context.Background(), testKeyRequestID, "req-log-test")
 		err := NewInternalError("database", nil,
 			WithContext(ctx),
 			WithMetadata("query", "SELECT 1"),

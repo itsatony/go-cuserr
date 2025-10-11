@@ -1,3 +1,4 @@
+//lint:file-ignore SA1029 Test files use string context keys to match library expectations
 package cuserr
 
 import (
@@ -35,6 +36,7 @@ func TestContextExtractionResilience(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
+				//nolint:SA1029 // Testing multi-framework key compatibility requires various string keys
 				ctx := context.WithValue(context.Background(), tc.ctxKey, tc.ctxValue)
 
 				err := NewValidationErrorFromContext(ctx, "test_field", "test error")
@@ -55,9 +57,9 @@ func TestContextExtractionResilience(t *testing.T) {
 	t.Run("Complete Context-Aware Constructor Coverage", func(t *testing.T) {
 		// Create comprehensive context with all supported metadata
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, "request_id", "req_comprehensive")
-		ctx = context.WithValue(ctx, "user_id", "usr_comprehensive")
-		ctx = context.WithValue(ctx, "trace_id", "trace_comprehensive")
+		ctx = context.WithValue(ctx, testKeyRequestID, "req_comprehensive")
+		ctx = context.WithValue(ctx, testKeyUserID, "usr_comprehensive")
+		ctx = context.WithValue(ctx, testKeyTraceID, "trace_comprehensive")
 
 		// Test all context-aware constructors to achieve 0% → 100% coverage
 		constructors := []struct {
@@ -147,8 +149,8 @@ func TestContextExtractionResilience(t *testing.T) {
 
 		// Test ContextualErrorBuilder with complex context
 		complexCtx := context.Background()
-		complexCtx = context.WithValue(complexCtx, "request_id", "req_complex")
-		complexCtx = context.WithValue(complexCtx, "user_id", "usr_complex")
+		complexCtx = context.WithValue(complexCtx, testKeyRequestID, "req_complex")
+		complexCtx = context.WithValue(complexCtx, testKeyUserID, "usr_complex")
 
 		builder := NewContextualErrorBuilder(complexCtx, ErrTimeout)
 		err = builder.Build()

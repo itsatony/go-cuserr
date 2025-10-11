@@ -1,3 +1,4 @@
+//lint:file-ignore SA1029 Test files use string context keys to match library expectations
 package cuserr
 
 import (
@@ -402,7 +403,7 @@ func TestContextIntegration(t *testing.T) {
 	}
 
 	t.Run("Normal Processing", func(t *testing.T) {
-		ctx := context.WithValue(context.Background(), "request_id", "req-ctx-normal")
+		ctx := context.WithValue(context.Background(), testKeyRequestID, "req-ctx-normal")
 		err := processWithContext(ctx, "usr_123")
 
 		if err != nil {
@@ -414,7 +415,7 @@ func TestContextIntegration(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 		defer cancel()
 
-		ctx = context.WithValue(ctx, "request_id", "req-ctx-timeout")
+		ctx = context.WithValue(ctx, testKeyRequestID, "req-ctx-timeout")
 
 		time.Sleep(2 * time.Millisecond) // Ensure context times out
 		err := processWithContext(ctx, "usr_123")
@@ -443,7 +444,7 @@ func TestContextIntegration(t *testing.T) {
 	})
 
 	t.Run("Validation Error with Context", func(t *testing.T) {
-		ctx := context.WithValue(context.Background(), "request_id", "req-ctx-validation")
+		ctx := context.WithValue(context.Background(), testKeyRequestID, "req-ctx-validation")
 		err := processWithContext(ctx, "invalid")
 
 		if err == nil {

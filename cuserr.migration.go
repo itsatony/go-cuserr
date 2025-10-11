@@ -462,11 +462,7 @@ func IsCompatibleError(err error) bool {
 
 	// Has As method (Go 1.13+ compatible)
 	var target *CustomError
-	if errors.As(err, &target) {
-		return true
-	}
-
-	return false
+	return errors.As(err, &target)
 }
 
 // Migration report utilities

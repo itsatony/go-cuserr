@@ -1,3 +1,4 @@
+//lint:file-ignore SA1029 Test files use string context keys to match library expectations
 package cuserr
 
 import (
@@ -64,7 +65,7 @@ func TestConvenienceConstructors(t *testing.T) {
 // TestContextBasedConfiguration tests context-based configuration
 func TestContextBasedConfiguration(t *testing.T) {
 	t.Run("Context with Request ID", func(t *testing.T) {
-		ctx := context.WithValue(context.Background(), "request_id", "req-ctx-test")
+		ctx := context.WithValue(context.Background(), testKeyRequestID, "req-ctx-test")
 		err := NewValidationErrorFromContext(ctx, "email", "invalid format")
 
 		if err.RequestID != "req-ctx-test" {
@@ -73,7 +74,7 @@ func TestContextBasedConfiguration(t *testing.T) {
 	})
 
 	t.Run("Context with User ID", func(t *testing.T) {
-		ctx := context.WithValue(context.Background(), "user_id", "usr_456")
+		ctx := context.WithValue(context.Background(), testKeyUserID, "usr_456")
 		err := NewValidationErrorFromContext(ctx, "email", "invalid format")
 
 		if userID, exists := err.GetMetadata("user_id"); !exists || userID != "usr_456" {
@@ -125,7 +126,7 @@ func TestErrorAggregation(t *testing.T) {
 	})
 
 	t.Run("Error Collection Builder", func(t *testing.T) {
-		ctx := context.WithValue(context.Background(), "request_id", "req-builder-test")
+		ctx := context.WithValue(context.Background(), testKeyRequestID, "req-builder-test")
 
 		builder := NewValidationCollectionBuilder().WithContext(ctx)
 		builder.AddValidation("email", "required field")
@@ -394,7 +395,7 @@ func TestErrorBuilder(t *testing.T) {
 	})
 
 	t.Run("Contextual Error Builder", func(t *testing.T) {
-		ctx := context.WithValue(context.Background(), "user_id", "usr_context")
+		ctx := context.WithValue(context.Background(), testKeyUserID, "usr_context")
 
 		// Test the simpler case - just create and verify the builder works
 		err := NewContextualErrorBuilder(ctx, ErrForbidden).
@@ -820,7 +821,7 @@ func TestUncoveredConvenienceConstructors(t *testing.T) {
 	})
 
 	t.Run("Context-Aware Constructors", func(t *testing.T) {
-		ctx := context.WithValue(context.Background(), "user_id", "usr_context_test")
+		ctx := context.WithValue(context.Background(), testKeyUserID, "usr_context_test")
 
 		// Test NewValidationErrorWithContext
 		validationErr := NewValidationErrorWithContext(ctx, "email", "invalid")
@@ -866,7 +867,7 @@ func TestUncoveredBuilderMethods(t *testing.T) {
 		}
 
 		// Test WithContext on ErrorBuilder
-		ctx := context.WithValue(context.Background(), "request_id", "req_builder_context")
+		ctx := context.WithValue(context.Background(), testKeyRequestID, "req_builder_context")
 		contextErr := NewErrorBuilder(ErrInternal).
 			WithMessage("internal error").
 			WithContext(ctx).
@@ -1031,7 +1032,7 @@ func TestUncoveredContextAndLoggingMethods(t *testing.T) {
 	})
 
 	t.Run("Error Builder Context Integration", func(t *testing.T) {
-		ctx := context.WithValue(context.Background(), "user_id", "usr_builder_test")
+		ctx := context.WithValue(context.Background(), testKeyUserID, "usr_builder_test")
 
 		// Test ContextualErrorBuilder Build method
 		err := NewContextualErrorBuilder(ctx, ErrForbidden).
@@ -1188,7 +1189,7 @@ func TestUncoveredMigrationMethods(t *testing.T) {
 func TestUncoveredContextHelpers(t *testing.T) {
 	t.Run("Context Value Extractors", func(t *testing.T) {
 		// Test GetRequestIDFromContext with different keys
-		ctx1 := context.WithValue(context.Background(), "request_id", "req_123")
+		ctx1 := context.WithValue(context.Background(), testKeyRequestID, "req_123")
 		if requestID := GetRequestIDFromContext(ctx1); requestID != "req_123" {
 			t.Error("Should extract request_id")
 		}
