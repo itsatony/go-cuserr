@@ -156,9 +156,8 @@ func TestOptionsPattern(t *testing.T) {
 
 	t.Run("WithContext handles nil context gracefully", func(t *testing.T) {
 		// Should not panic - intentionally testing nil handling
-		//nolint:SA1012 // Testing nil context handling is intentional
 		err := NewInternalError("database", nil,
-			WithContext(nil),
+			WithContext(context.TODO()), // Use context.TODO() per linter guidance
 		)
 
 		if err == nil {

@@ -28,7 +28,14 @@ type Field struct {
 // NoOpLogger is a logger that does nothing (useful as default for libraries)
 type NoOpLogger struct{}
 
+// Error is a no-op implementation that discards all error log messages
 func (n NoOpLogger) Error(ctx context.Context, msg string, fields ...Field) {}
-func (n NoOpLogger) Warn(ctx context.Context, msg string, fields ...Field)  {}
-func (n NoOpLogger) Info(ctx context.Context, msg string, fields ...Field)  {}
+
+// Warn is a no-op implementation that discards all warning log messages
+func (n NoOpLogger) Warn(ctx context.Context, msg string, fields ...Field) {}
+
+// Info is a no-op implementation that discards all info log messages
+func (n NoOpLogger) Info(ctx context.Context, msg string, fields ...Field) {}
+
+// Debug is a no-op implementation that discards all debug log messages
 func (n NoOpLogger) Debug(ctx context.Context, msg string, fields ...Field) {}
