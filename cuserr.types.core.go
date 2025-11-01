@@ -36,19 +36,41 @@ type StackFrame struct {
 	Line     int    `json:"line"`
 }
 
-// CustomError provides rich error context for debugging and client responses
+// CustomError provides rich error context for debugging and responses across all protocols
 // Thread-safe implementation with mutex protection for metadata and stack trace operations
+//
+// Universal Design: Works for HTTP APIs, gRPC services, CLI tools, batch jobs, and internal logging
 type CustomError struct {
-	// Category determines HTTP status code mapping
+	// Category determines protocol-specific status/code mapping (HTTP, gRPC, exit codes, syslog)
 	Category ErrorCategory `json:"category"`
 	// Code is a unique error code for this error type
 	Code string `json:"code"`
-	// Message is a human-readable error message
+	// Message is a developer-focused error message (internal use)
 	Message string `json:"message"`
+
+	// Universal User-Facing Fields (work across all protocols)
+	// PublicMessage is a safe, user-friendly message suitable for end users
+	// Works for: HTTP responses, CLI output, gRPC details, mobile apps
+	PublicMessage string `json:"public_message,omitempty"`
+	// HelpURL points to documentation or troubleshooting guide
+	HelpURL string `json:"help_url,omitempty"`
+	// Suggestions provides actionable steps to resolve the error
+	Suggestions []string `json:"suggestions,omitempty"`
+	// MessageKey is a translation key for i18n support (see go-cuserr-i18n extension)
+	MessageKey string `json:"message_key,omitempty"`
+
+	// Universal Tracing Fields (work across all protocols)
+	// OperationID uniquely identifies this operation
+	// Works for: HTTP requests, gRPC calls, CLI commands, batch jobs, cron tasks
+	OperationID string `json:"operation_id,omitempty"`
+	// TraceID for distributed tracing (OpenTelemetry, Jaeger, Zipkin)
+	TraceID string `json:"trace_id,omitempty"`
+	// SpanID for distributed tracing span identification
+	SpanID string `json:"span_id,omitempty"`
+
+	// Internal Fields
 	// Metadata contains additional context
 	metadata map[string]string
-	// RequestID for tracing
-	RequestID string `json:"request_id,omitempty"`
 	// Timestamp when error occurred
 	Timestamp time.Time `json:"timestamp"`
 	// StackTrace for debugging (not serialized to JSON)

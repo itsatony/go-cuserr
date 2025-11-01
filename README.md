@@ -5,17 +5,18 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/itsatony/go-cuserr)](https://goreportcard.com/report/github.com/itsatony/go-cuserr)
 [![Coverage](https://img.shields.io/badge/coverage-92.3%25-brightgreen)](https://github.com/itsatony/go-cuserr)
 
-**Production-ready Go error handling with 92.3% test coverage, zero dependencies, and built-in HTTP integration.**
+**Protocol-agnostic Go error handling with 92.3% test coverage. One error type for HTTP, gRPC, CLI, batch jobs, and more.**
 
 ## Why go-cuserr?
 
-✅ **Reduces boilerplate by 50%** - `NewValidationError("email", "invalid")` vs verbose error construction  
-✅ **Automatic HTTP status mapping** - Errors become proper HTTP responses instantly  
-✅ **Production-safe by default** - Sensitive details filtered in production mode  
-✅ **Thread-safe & performant** - 92.3% test coverage, comprehensive race detection  
-✅ **Zero dependencies** - Only uses Go standard library  
+✅ **Protocol-agnostic design** - Same error works in HTTP APIs, gRPC services, CLI tools, batch jobs, and syslog
+✅ **Reduces boilerplate by 50%** - `NewValidationError("email", "invalid")` vs verbose error construction
+✅ **Universal error mapping** - Automatic conversion to HTTP status, gRPC codes, CLI exit codes, syslog severity
+✅ **Production-safe by default** - Sensitive details filtered in production mode
+✅ **Thread-safe & performant** - 92.3% test coverage, comprehensive race detection
+✅ **Zero dependencies** - Only uses Go standard library
 
-**Perfect for**: Web APIs, microservices, enterprise applications needing structured error handling
+**Perfect for**: REST APIs, gRPC services, CLI applications, batch jobs, microservices, cron tasks, background workers
 
 ## Installation
 
@@ -44,6 +45,41 @@ func main() {
 ```
 
 **That's it!** Three lines for production-ready error handling with HTTP integration.
+
+## 🌐 Protocol-Agnostic Design
+
+**One error type, every protocol.** Create an error once, use it everywhere:
+
+```go
+// Create error once
+err := cuserr.NewUnauthorizedError("Invalid API token")
+err.OperationID = "op-12345"
+err.TraceID = "trace-abc"
+
+// Use in HTTP API
+w.WriteHeader(err.ToHTTPStatus())           // 401 Unauthorized
+json.NewEncoder(w).Encode(err.ToJSON())
+
+// Use in gRPC service
+return nil, status.Error(
+    codes.Code(err.ToGRPCCode()),           // codes.Unauthenticated (16)
+    err.Message,
+)
+
+// Use in CLI application
+os.Exit(err.ToExitCode())                   // Exit code 1
+
+// Use in batch jobs / cron tasks
+syslog.Write(err.ToSyslogSeverity(), err.Message)  // Severity 3 (Error)
+
+// Use in logging systems
+logger.Error(err.DetailedError())           // Full context with metadata
+```
+
+**Real-world examples:**
+- **[gRPC Service](examples/grpc_service.go)** - Microservices with distributed tracing
+- **[Batch Jobs](examples/batch_job.go)** - Cron tasks, background workers, data migrations
+- **[HTTP Service](examples/http_service.go)** - REST APIs with full error handling
 
 ## 🆕 v0.3.0: Logger Injection & Options Pattern
 
@@ -109,30 +145,51 @@ collection.AddValidation("age", "must be 18+")
 
 // Convert to HTTP response
 w.WriteHeader(collection.ToHTTPStatus()) // 400
-json.NewEncoder(w).Encode(collection.ToClientJSON())
+json.NewEncoder(w).Encode(collection.ToPublicJSON())
 ```
 
-## Error Categories → HTTP Status
+## Protocol Mappings
 
-| Category | HTTP | When to Use |
-|----------|------|-------------|
-| `Validation` | 400 | Invalid user input |
-| `Unauthorized` | 401 | Authentication required |
-| `Forbidden` | 403 | Permission denied |
-| `NotFound` | 404 | Resource doesn't exist |
-| `Conflict` | 409 | Resource already exists |
-| `Timeout` | 408 | Operation timeout |
-| `RateLimit` | 429 | Too many requests |
-| `External` | 502 | External service failed |
-| `Internal` | 500 | Server error |
+**Same error category maps to appropriate codes across all protocols:**
+
+| Category | HTTP | gRPC | CLI Exit | Syslog | When to Use |
+|----------|------|------|----------|--------|-------------|
+| `Validation` | 400 | 3 (INVALID_ARGUMENT) | 1 | 6 (Info) | Invalid user input |
+| `Unauthorized` | 401 | 16 (UNAUTHENTICATED) | 1 | 3 (Error) | Authentication required |
+| `Forbidden` | 403 | 7 (PERMISSION_DENIED) | 1 | 3 (Error) | Permission denied |
+| `NotFound` | 404 | 5 (NOT_FOUND) | 1 | 6 (Info) | Resource doesn't exist |
+| `Conflict` | 409 | 6 (ALREADY_EXISTS) | 1 | 3 (Error) | Resource already exists |
+| `Timeout` | 408 | 4 (DEADLINE_EXCEEDED) | 1 | 4 (Warning) | Operation timeout |
+| `RateLimit` | 429 | 8 (RESOURCE_EXHAUSTED) | 1 | 4 (Warning) | Too many requests |
+| `External` | 502 | 14 (UNAVAILABLE) | 2 | 3 (Error) | External service failed |
+| `Internal` | 500 | 13 (INTERNAL) | 2 | 2 (Critical) | Server error |
 
 ## Examples
 
-- **[Modern API Usage](examples/modern_api_usage.go)** - **NEW v0.3.0**: Logger injection & options pattern
-- **[Basic Usage](examples/basic_usage.go)** - Error creation and handling fundamentals
+**Protocol-Agnostic:**
+- **[gRPC Service](examples/grpc_service.go)** - 🆕 Microservices with distributed tracing, automatic gRPC code mapping
+- **[Batch Jobs](examples/batch_job.go)** - 🆕 Cron tasks, background workers, data migrations with syslog integration
+
+**HTTP-Focused:**
+- **[Modern API Usage](examples/modern_api_usage.go)** - **v0.3.0**: Logger injection & options pattern
 - **[HTTP Service](examples/http_service.go)** - Complete REST API with error handling
 - **[Middleware](examples/middleware.go)** - Request tracing, auth, rate limiting
+
+**Fundamentals:**
+- **[Basic Usage](examples/basic_usage.go)** - Error creation and handling fundamentals
 - **[Enhanced Features](examples/enhanced_usage.go)** - v0.2.0+ advanced patterns
+
+**Run examples:**
+```bash
+# gRPC service simulation
+go run -tags grpc_service examples/grpc_service.go
+
+# Batch job processing
+go run -tags batch_job examples/batch_job.go
+
+# HTTP service (runs on :8080)
+go run examples/http_service.go
+```
 
 ## Contributing
 
@@ -187,7 +244,7 @@ err := cuserr.NewCustomError(cuserr.ErrInternal, nil, "database connection faile
 err.WithMetadata("database", "users")
 err.WithMetadata("operation", "INSERT")
 err.WithMetadata("table", "profiles")
-err.WithRequestID("req_xyz789")
+err.OperationID = "req_xyz789"
 
 // Thread-safe metadata access
 if dbName, exists := err.GetMetadata("database"); exists {
@@ -330,17 +387,17 @@ err.ClearStackTrace() // Save memory
 ```go
 err := cuserr.NewCustomError(cuserr.ErrValidation, nil, "validation failed")
 err.WithMetadata("field", "email")
-err.WithRequestID("req_123")
+err.OperationID = "req_123"
 
 jsonData := err.ToJSON()
 // Output:
 // {
 //   "error": {
 //     "code": "INVALID_INPUT",
-//     "message": "validation failed", 
+//     "message": "validation failed",
 //     "category": "validation",
 //     "metadata": {"field": "email"},
-//     "request_id": "req_123",
+//     "operation_id": "req_123",
 //     "timestamp": "2023-01-01T12:00:00Z"
 //   }
 // }
@@ -350,7 +407,7 @@ jsonData := err.ToJSON()
 
 ```go
 // In production mode, sensitive details are filtered
-clientJSON := err.ToClientJSON()
+publicJSON := err.ToPublicJSON()
 // Filters out internal metadata and provides generic messages for internal errors
 ```
 
@@ -446,11 +503,12 @@ err.WithMetadata("input", userInput)
 err.WithMetadata("rule", "email_format")
 ```
 
-### 3. Use Request IDs for Tracing
+### 3. Use Operation IDs for Tracing
 
 ```go
 err := cuserr.NewCustomError(cuserr.ErrInternal, nil, "operation failed")
-err.WithRequestID(getRequestID(ctx))
+err.OperationID = getOperationID(ctx)
+// Works for HTTP requests, gRPC calls, CLI commands, batch jobs, etc.
 ```
 
 ### 4. Configure for Environment
@@ -475,10 +533,10 @@ cuserr.SetConfig(&cuserr.Config{
 if err != nil {
     // Log detailed information
     log.Printf("Error: %s", customErr.DetailedError())
-    
-    // Return client-safe response
+
+    // Return client-safe response (HTTP example)
     w.WriteHeader(customErr.ToHTTPStatus())
-    json.NewEncoder(w).Encode(customErr.ToClientJSON())
+    json.NewEncoder(w).Encode(customErr.ToPublicJSON())
 }
 ```
 
@@ -544,12 +602,12 @@ Configure errors per request with automatic context extraction:
 ```go
 // Set context-based configuration
 ctx := cuserr.WithProductionMode(ctx)
-ctx = context.WithValue(ctx, "request_id", "req_123")
+ctx = context.WithValue(ctx, "operation_id", "req_123")
 ctx = context.WithValue(ctx, "user_id", "usr_456")
 
 // Create context-aware errors (auto-extracts metadata)
 err := cuserr.NewValidationErrorFromContext(ctx, "email", "invalid")
-fmt.Println(err.RequestID) // "req_123"
+fmt.Println(err.OperationID) // "req_123"
 userID, _ := err.GetMetadata("user_id") // "usr_456"
 ```
 
@@ -568,7 +626,7 @@ collection := cuserr.NewValidationCollectionBuilder().
 // Convert to HTTP response
 w.Header().Set("Content-Type", "application/json")
 w.WriteHeader(collection.ToHTTPStatus()) // 400
-json.NewEncoder(w).Encode(collection.ToClientJSON())
+json.NewEncoder(w).Encode(collection.ToPublicJSON())
 ```
 
 ### 🆕 v0.3.0: Options Pattern & Logger Injection
@@ -583,9 +641,11 @@ import (
 
 // Available options:
 // - WithLogger(logger)      // Inject your logger
-// - WithContext(ctx)         // Auto-extract request_id, user_id, trace_id
+// - WithContext(ctx)         // Auto-extract operation_id, user_id, trace_id
 // - WithMetadata(k, v)       // Add custom metadata
-// - WithRequestID(id)        // Set request ID
+// - WithOperationID(id)      // Set operation ID
+// - WithTraceID(id)          // Set trace ID (for distributed tracing)
+// - WithSpanID(id)           // Set span ID (for distributed tracing)
 // - WithStack(skip)          // Explicitly capture stack trace
 // - WithoutStack()           // Disable stack trace
 

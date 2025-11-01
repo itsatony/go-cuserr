@@ -32,8 +32,7 @@ func ErrorMiddleware(next http.Handler) http.Handler {
 					"internal server error occurred").
 					WithMetadata("method", r.Method).
 					WithMetadata("path", r.URL.Path).
-					WithMetadata("panic_value", fmt.Sprintf("%v", recovered)).
-					WithRequestID(GetRequestID(r.Context()))
+					WithMetadata("panic_value", fmt.Sprintf("%v", recovered))
 
 				WriteErrorResponse(w, panicErr)
 			}
@@ -88,8 +87,7 @@ func TimeoutMiddleware(timeout time.Duration) func(http.Handler) http.Handler {
 						"request timeout exceeded").
 						WithMetadata("timeout", timeout.String()).
 						WithMetadata("method", r.Method).
-						WithMetadata("path", r.URL.Path).
-						WithRequestID(GetRequestID(r.Context()))
+						WithMetadata("path", r.URL.Path)
 
 					WriteErrorResponse(w, timeoutErr)
 				}
@@ -125,8 +123,8 @@ func RateLimitMiddleware(requestsPerMinute int) func(http.Handler) http.Handler 
 					"rate limit exceeded").
 					WithMetadata("client_ip", clientIP).
 					WithMetadata("limit", fmt.Sprintf("%d/min", requestsPerMinute)).
-					WithMetadata("current_requests", fmt.Sprintf("%d", len(validRequests))).
-					WithRequestID(GetRequestID(r.Context()))
+					WithMetadata("current_requests", fmt.Sprintf("%d", len(validRequests)))
+				rateLimitErr.OperationID = GetRequestID(r.Context())
 
 				WriteErrorResponse(w, rateLimitErr)
 				return
@@ -152,8 +150,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				nil,
 				"API key required").
 				WithMetadata("header", "X-API-Key").
-				WithMetadata("path", r.URL.Path).
-				WithRequestID(GetRequestID(r.Context()))
+				WithMetadata("path", r.URL.Path)
+				unauthorizedErr.OperationID = GetRequestID(r.Context())
 
 			WriteErrorResponse(w, unauthorizedErr)
 			return
@@ -165,8 +163,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				cuserr.ErrUnauthorized,
 				nil,
 				"invalid API key").
-				WithMetadata("api_key", maskAPIKey(apiKey)).
-				WithRequestID(GetRequestID(r.Context()))
+				WithMetadata("api_key", maskAPIKey(apiKey))
+				unauthorizedErr.OperationID = GetRequestID(r.Context())
 
 			WriteErrorResponse(w, unauthorizedErr)
 			return
@@ -241,7 +239,7 @@ func WriteErrorResponse(w http.ResponseWriter, err *cuserr.CustomError) {
 	config := cuserr.GetConfig()
 	var response map[string]interface{}
 	if config.ProductionMode {
-		response = err.ToClientJSON()
+		response = err.ToPublicJSON()
 	} else {
 		response = err.ToJSON()
 	}
@@ -331,40 +329,40 @@ func ErrorDemoHandler(w http.ResponseWriter, r *http.Request) {
 	case "validation":
 		err = cuserr.NewCustomError(cuserr.ErrInvalidInput, nil, "validation failed").
 			WithMetadata("field", "email").
-			WithMetadata("user_id", userID).
-			WithRequestID(requestID)
+			WithMetadata("user_id", userID)
+		err.OperationID = requestID
 
 	case "not_found":
 		err = cuserr.NewCustomError(cuserr.ErrNotFound, nil, "resource not found").
 			WithMetadata("resource", "user").
-			WithMetadata("resource_id", "usr_404").
-			WithRequestID(requestID)
+			WithMetadata("resource_id", "usr_404")
+		err.OperationID = requestID
 
 	case "forbidden":
 		err = cuserr.NewCustomError(cuserr.ErrForbidden, nil, "insufficient permissions").
 			WithMetadata("required_role", "admin").
 			WithMetadata("user_role", "user").
-			WithMetadata("user_id", userID).
-			WithRequestID(requestID)
+			WithMetadata("user_id", userID)
+		err.OperationID = requestID
 
 	case "conflict":
 		err = cuserr.NewCustomError(cuserr.ErrAlreadyExists, nil, "resource already exists").
 			WithMetadata("resource", "email").
-			WithMetadata("value", "test@example.com").
-			WithRequestID(requestID)
+			WithMetadata("value", "test@example.com")
+		err.OperationID = requestID
 
 	case "external":
 		originalErr := errors.New("connection refused")
 		err = cuserr.NewCustomError(cuserr.ErrExternal, originalErr, "external service unavailable").
 			WithMetadata("service", "payment_gateway").
-			WithMetadata("endpoint", "https://api.payment.com/charge").
-			WithRequestID(requestID)
+			WithMetadata("endpoint", "https://api.payment.com/charge")
+		err.OperationID = requestID
 
 	case "internal":
 		originalErr := errors.New("database connection failed")
 		err = cuserr.NewCustomError(cuserr.ErrInternal, originalErr, "internal server error").
-			WithMetadata("component", "database").
-			WithRequestID(requestID)
+			WithMetadata("component", "database")
+		err.OperationID = requestID
 
 	case "panic":
 		// Simulate a panic (will be caught by ErrorMiddleware)

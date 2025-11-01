@@ -96,12 +96,6 @@ func (e *CustomError) GetAllMetadata() map[string]string {
 	return copyMap
 }
 
-// WithRequestID adds request ID for tracing
-func (e *CustomError) WithRequestID(requestID string) *CustomError {
-	e.RequestID = requestID
-	return e
-}
-
 // Error implements the error interface
 func (e *CustomError) Error() string {
 	if e.Wrapped != nil {

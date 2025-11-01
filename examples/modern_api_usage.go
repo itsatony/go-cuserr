@@ -48,7 +48,7 @@ func example1SimpleError() {
 	fmt.Printf("Error: %s\n", err.Error())
 	fmt.Printf("Category: %s\n", err.Category)
 	fmt.Printf("HTTP Status: %d\n", err.ToHTTPStatus())
-	fmt.Printf("Request ID: %s\n\n", err.RequestID)
+	fmt.Printf("Operation ID: %s\n\n", err.OperationID)
 }
 
 // Example 2: With logger injection
@@ -99,7 +99,7 @@ func example3MultipleOptions() {
 	)
 
 	fmt.Printf("Error created with context and logger\n")
-	fmt.Printf("Request ID: %s\n", err.RequestID)
+	fmt.Printf("Operation ID: %s\n", err.OperationID)
 	if userID, ok := err.GetMetadata("user_id"); ok {
 		fmt.Printf("User ID: %s\n", userID)
 	}
@@ -134,7 +134,7 @@ func example4ServicePattern() {
 		// Check error type
 		if customErr, ok := err.(*cuserr.CustomError); ok {
 			fmt.Printf("HTTP Status would be: %d\n", customErr.ToHTTPStatus())
-			fmt.Printf("Request ID: %s\n", customErr.RequestID)
+			fmt.Printf("Operation ID: %s\n", customErr.OperationID)
 		}
 	} else {
 		fmt.Printf("User: %+v\n", user)

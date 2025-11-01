@@ -90,8 +90,8 @@ const (
 	JSON_FIELD_CATEGORY = "category"
 	// JSON_FIELD_METADATA defines the JSON field name for error metadata
 	JSON_FIELD_METADATA = "metadata"
-	// JSON_FIELD_REQUEST_ID defines the JSON field name for request IDs
-	JSON_FIELD_REQUEST_ID = "request_id"
+	// JSON_FIELD_OPERATION_ID defines the JSON field name for operation IDs
+	JSON_FIELD_OPERATION_ID = "operation_id"
 	// JSON_FIELD_TIMESTAMP defines the JSON field name for timestamps
 	JSON_FIELD_TIMESTAMP = "timestamp"
 
@@ -128,8 +128,8 @@ const (
 	LOG_TEMPLATE_STACK_FRAME = "  %s\n    %s:%d"
 	// LOG_TEMPLATE_ERROR_DETAIL defines template for detailed error information
 	LOG_TEMPLATE_ERROR_DETAIL = "Error: %s\nCategory: %s, Code: %s"
-	// LOG_TEMPLATE_REQUEST_ID defines template for request ID logging
-	LOG_TEMPLATE_REQUEST_ID = "RequestID: %s"
+	// LOG_TEMPLATE_OPERATION_ID defines template for operation ID logging
+	LOG_TEMPLATE_OPERATION_ID = "OperationID: %s"
 	// LOG_TEMPLATE_WRAPPED_ERROR defines template for wrapped error logging
 	LOG_TEMPLATE_WRAPPED_ERROR = "Wrapped: %v"
 

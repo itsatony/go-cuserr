@@ -181,8 +181,8 @@ func (b *ContextualErrorBuilder) Build() *CustomError {
 			}
 			b.ErrorBuilder.metadata["user_id"] = userID
 		}
-		if requestID := GetRequestIDFromContext(b.ctx); requestID != "" {
-			b.ErrorBuilder.requestID = requestID
+		if operationID := GetRequestIDFromContext(b.ctx); operationID != "" {
+			b.ErrorBuilder.operationID = operationID
 		}
 		if traceID := GetTraceIDFromContext(b.ctx); traceID != "" {
 			if b.ErrorBuilder.metadata == nil {
@@ -259,9 +259,9 @@ func enrichFromContext(ctx context.Context, err *CustomError) *CustomError {
 		return err
 	}
 
-	// Extract request ID
-	if requestID := GetRequestIDFromContext(ctx); requestID != "" {
-		err.WithRequestID(requestID)
+	// Extract operation ID
+	if operationID := GetRequestIDFromContext(ctx); operationID != "" {
+		err.OperationID = operationID
 	}
 
 	// Extract user ID

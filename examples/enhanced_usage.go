@@ -81,7 +81,7 @@ func demonstrateContextBasedErrors() {
 	// Create error from context - automatically extracts metadata
 	err := cuserr.NewValidationErrorFromContext(ctx, "age", "must be positive")
 	fmt.Printf("Context Error: %s\n", err.Error())
-	fmt.Printf("  Request ID: %s\n", err.RequestID)
+	fmt.Printf("  Operation ID: %s\n", err.OperationID)
 	if userID, exists := err.GetMetadata("user_id"); exists {
 		fmt.Printf("  User ID: %s\n", userID)
 	}
@@ -109,7 +109,7 @@ func demonstrateErrorAggregation() {
 
 	// Create a validation error collection
 	collection := cuserr.NewValidationErrorCollection()
-	collection.WithRequestID("req-validation-demo")
+	collection.WithOperationID("req-validation-demo")
 
 	// Add multiple validation errors
 	collection.AddValidation("email", "invalid format")
@@ -135,7 +135,7 @@ func demonstrateErrorAggregation() {
 		Build()
 
 	fmt.Printf("\nBuilder Collection: %s\n", builderCollection.Error())
-	fmt.Printf("  Request ID: %s\n", builderCollection.RequestID)
+	fmt.Printf("  Operation ID: %s\n", builderCollection.OperationID)
 
 	fmt.Println()
 }
@@ -197,10 +197,10 @@ func demonstrateStructuredLogging() {
 
 	// Create error with rich context
 	err := cuserr.NewInternalError("auth-service", fmt.Errorf("redis connection failed")).
-		WithRequestID("req-logging-demo").
 		WithMetadata("user_id", "usr_log_demo").
 		WithMetadata("operation", "user_login").
 		WithMetadata("retry_count", "2")
+	err.OperationID = "req-logging-demo"
 
 	// Get structured log fields
 	logFields := err.ToLogFields()
@@ -217,7 +217,7 @@ func demonstrateStructuredLogging() {
 	collection := cuserr.NewValidationErrorCollection()
 	collection.AddValidation("field1", "error1")
 	collection.AddValidation("field2", "error2")
-	collection.WithRequestID("req-collection-log")
+	collection.WithOperationID("req-collection-log")
 
 	collectionFields := collection.ToLogFields()
 	fmt.Printf("\nError collection log fields:\n")
@@ -280,12 +280,12 @@ func demonstrateErrorBuilders() {
 		WithMessage("validation failed for user input").
 		WithMetadata("component", "user-validator").
 		WithMetadata("validation_type", "email_format").
-		WithRequestID("req-builder-001").
+		WithOperationID("req-builder-001").
 		Build()
 
 	fmt.Printf("Built error: %s\n", err1.Error())
 	fmt.Printf("  Category: %s\n", err1.Category)
-	fmt.Printf("  Request ID: %s\n", err1.RequestID)
+	fmt.Printf("  Operation ID: %s\n", err1.OperationID)
 
 	// Contextual error builder
 	ctx := context.Background()
@@ -334,7 +334,7 @@ func enhancedErrorMiddleware(next http.Handler) http.Handler {
 				w.WriteHeader(panicErr.ToHTTPStatus())
 
 				// Use client-safe JSON in production
-				response := panicErr.ToClientJSON()
+				response := panicErr.ToPublicJSON()
 				if err := json.NewEncoder(w).Encode(response); err != nil {
 					log.Printf("Failed to encode error response: %v", err)
 				}
@@ -383,7 +383,7 @@ func exampleAPIHandler(w http.ResponseWriter, r *http.Request) {
 	if validationErrors := collection.BuildIfHasErrors(); validationErrors != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(validationErrors.ToHTTPStatus())
-		json.NewEncoder(w).Encode(validationErrors.ToClientJSON())
+		json.NewEncoder(w).Encode(validationErrors.ToPublicJSON())
 		return
 	}
 
@@ -392,7 +392,7 @@ func exampleAPIHandler(w http.ResponseWriter, r *http.Request) {
 		// Error is already enriched with context and properly categorized
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(err.ToHTTPStatus())
-		json.NewEncoder(w).Encode(err.ToClientJSON())
+		json.NewEncoder(w).Encode(err.ToPublicJSON())
 		return
 	}
 

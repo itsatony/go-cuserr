@@ -249,11 +249,11 @@ func NewForbiddenErrorFromContext(ctx context.Context, action, resource string) 
 
 // ErrorBuilder provides a fluent interface for building complex errors
 type ErrorBuilder struct {
-	sentinel  error
-	wrapped   error
-	message   string
-	metadata  map[string]string
-	requestID string
+	sentinel    error
+	wrapped     error
+	message     string
+	metadata    map[string]string
+	operationID string
 }
 
 // NewErrorBuilder creates a new error builder
@@ -288,9 +288,9 @@ func (b *ErrorBuilder) WithMetadata(key, value string) *ErrorBuilder {
 	return b
 }
 
-// WithRequestID sets the request ID
-func (b *ErrorBuilder) WithRequestID(requestID string) *ErrorBuilder {
-	b.requestID = requestID
+// WithOperationID sets the operation ID
+func (b *ErrorBuilder) WithOperationID(operationID string) *ErrorBuilder {
+	b.operationID = operationID
 	return b
 }
 
@@ -300,8 +300,8 @@ func (b *ErrorBuilder) WithContext(ctx context.Context) *ErrorBuilder {
 		return b
 	}
 
-	if requestID, ok := ctx.Value("request_id").(string); ok && requestID != "" {
-		b.requestID = requestID
+	if operationID, ok := ctx.Value("request_id").(string); ok && operationID != "" {
+		b.operationID = operationID
 	}
 
 	if userID, ok := ctx.Value("user_id").(string); ok && userID != "" {
@@ -319,8 +319,8 @@ func (b *ErrorBuilder) WithContext(ctx context.Context) *ErrorBuilder {
 func (b *ErrorBuilder) Build() *CustomError {
 	err := NewCustomError(b.sentinel, b.wrapped, b.message)
 
-	if b.requestID != "" {
-		err.WithRequestID(b.requestID)
+	if b.operationID != "" {
+		err.OperationID = b.operationID
 	}
 
 	for key, value := range b.metadata {

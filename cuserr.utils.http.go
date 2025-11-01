@@ -36,7 +36,9 @@ func CategoryToHTTPStatus(category ErrorCategory) int {
 	}
 }
 
-// ToJSON converts error to JSON response format
+// ToJSON converts error to JSON response format with all available fields.
+// This is the internal/developer representation including all error details.
+// For public/external consumption, use ToPublicJSON() instead.
 func (e *CustomError) ToJSON() map[string]interface{} {
 	metadata := e.GetAllMetadata() // Thread-safe metadata access
 
@@ -47,13 +49,39 @@ func (e *CustomError) ToJSON() map[string]interface{} {
 		JSON_FIELD_TIMESTAMP: e.Timestamp.Format(time.RFC3339),
 	}
 
-	// Only include non-empty fields
-	if len(metadata) > 0 {
-		errorData[JSON_FIELD_METADATA] = metadata
+	// Add universal user-facing fields if set
+	if e.PublicMessage != "" {
+		errorData["public_message"] = e.PublicMessage
 	}
 
-	if e.RequestID != "" {
-		errorData[JSON_FIELD_REQUEST_ID] = e.RequestID
+	if e.HelpURL != "" {
+		errorData["help_url"] = e.HelpURL
+	}
+
+	if len(e.Suggestions) > 0 {
+		errorData["suggestions"] = e.Suggestions
+	}
+
+	if e.MessageKey != "" {
+		errorData["message_key"] = e.MessageKey
+	}
+
+	// Add universal tracing fields
+	if e.OperationID != "" {
+		errorData["operation_id"] = e.OperationID
+	}
+
+	if e.TraceID != "" {
+		errorData["trace_id"] = e.TraceID
+	}
+
+	if e.SpanID != "" {
+		errorData["span_id"] = e.SpanID
+	}
+
+	// Include metadata
+	if len(metadata) > 0 {
+		errorData[JSON_FIELD_METADATA] = metadata
 	}
 
 	return map[string]interface{}{
@@ -74,8 +102,9 @@ func (e *CustomError) ToJSONString() string {
 	result += fmt.Sprintf(`"%s":"%s",`, JSON_FIELD_CATEGORY, errorData[JSON_FIELD_CATEGORY])
 	result += fmt.Sprintf(`"%s":"%s"`, JSON_FIELD_TIMESTAMP, errorData[JSON_FIELD_TIMESTAMP])
 
-	if errorData[JSON_FIELD_REQUEST_ID] != nil {
-		result += fmt.Sprintf(`,"%s":"%s"`, JSON_FIELD_REQUEST_ID, errorData[JSON_FIELD_REQUEST_ID])
+	// Add operation_id if present
+	if errorData["operation_id"] != nil && errorData["operation_id"] != "" {
+		result += fmt.Sprintf(`,"%s":"%s"`, "operation_id", errorData["operation_id"])
 	}
 
 	if errorData[JSON_FIELD_METADATA] != nil {
@@ -98,9 +127,27 @@ func (e *CustomError) ToJSONString() string {
 	return result
 }
 
-// ClientSafeMessage returns a safe message for client consumption
-// In production mode, it may hide sensitive error details
-func (e *CustomError) ClientSafeMessage() string {
+// GetPublicMessage returns a safe, user-friendly message for external consumption.
+// This is the universal method that works across all protocols (HTTP, gRPC, CLI, etc.).
+//
+// Priority order:
+//  1. PublicMessage field if explicitly set
+//  2. Production-safe message for internal/external errors in production mode
+//  3. Developer message (fallback)
+//
+// Example:
+//
+//	err := cuserr.Internal("database", dbErr,
+//	    cuserr.WithPublicMessage("Service temporarily unavailable"),
+//	)
+//	msg := err.GetPublicMessage()  // Returns "Service temporarily unavailable"
+func (e *CustomError) GetPublicMessage() string {
+	// Priority 1: Use explicitly set public message
+	if e.PublicMessage != "" {
+		return e.PublicMessage
+	}
+
+	// Priority 2: Apply production mode safety
 	config := GetConfig()
 	if config.ProductionMode {
 		// In production, return generic messages for internal errors
@@ -113,11 +160,29 @@ func (e *CustomError) ClientSafeMessage() string {
 			return e.Message
 		}
 	}
+
+	// Priority 3: Fallback to developer message
 	return e.Message
 }
 
-// ToClientJSON converts error to client-safe JSON format
-func (e *CustomError) ToClientJSON() map[string]interface{} {
+// ToPublicJSON converts error to public-safe JSON format suitable for external consumption.
+// This is the universal method that works across all protocols.
+//
+// Behavior:
+//   - Uses GetPublicMessage() for the message field (respects PublicMessage field and production mode)
+//   - Includes PublicMessage, HelpURL, Suggestions, OperationID, TraceID, SpanID if set
+//   - In production mode, filters sensitive metadata (keeps only safe identifiers)
+//   - Thread-safe metadata access
+//
+// Example:
+//
+//	err := cuserr.Validation("email", "invalid format",
+//	    cuserr.WithPublicMessage("Please enter a valid email address"),
+//	    cuserr.WithSuggestions("Check for typos", "Ensure @ symbol is present"),
+//	    cuserr.WithHelpURL("https://docs.example.com/validation#email"),
+//	)
+//	json := err.ToPublicJSON()
+func (e *CustomError) ToPublicJSON() map[string]interface{} {
 	metadata := e.GetAllMetadata() // Thread-safe metadata access
 
 	// Filter sensitive metadata in production
@@ -127,31 +192,57 @@ func (e *CustomError) ToClientJSON() map[string]interface{} {
 		for k, v := range metadata {
 			// Only include non-sensitive metadata keys
 			switch k {
-			case "user_id", "request_id", "trace_id", "correlation_id":
+			case "user_id", "request_id", "trace_id", "span_id", "correlation_id", "operation_id":
 				// Keep safe identifiers
+				filteredMetadata[k] = v
 			default:
 				// Skip potentially sensitive data in production
 				continue
 			}
-			filteredMetadata[k] = v
 		}
 		metadata = filteredMetadata
 	}
 
 	errorData := map[string]interface{}{
 		JSON_FIELD_CODE:      e.Code,
-		JSON_FIELD_MESSAGE:   e.ClientSafeMessage(),
+		JSON_FIELD_MESSAGE:   e.GetPublicMessage(),
 		JSON_FIELD_CATEGORY:  e.Category,
 		JSON_FIELD_TIMESTAMP: e.Timestamp.Format(time.RFC3339),
 	}
 
-	// Only include non-empty fields
-	if len(metadata) > 0 {
-		errorData[JSON_FIELD_METADATA] = metadata
+	// Add universal fields if set
+	if e.PublicMessage != "" {
+		errorData["public_message"] = e.PublicMessage
 	}
 
-	if e.RequestID != "" {
-		errorData[JSON_FIELD_REQUEST_ID] = e.RequestID
+	if e.HelpURL != "" {
+		errorData["help_url"] = e.HelpURL
+	}
+
+	if len(e.Suggestions) > 0 {
+		errorData["suggestions"] = e.Suggestions
+	}
+
+	if e.MessageKey != "" {
+		errorData["message_key"] = e.MessageKey
+	}
+
+	// Add tracing fields (universal across protocols)
+	if e.OperationID != "" {
+		errorData["operation_id"] = e.OperationID
+	}
+
+	if e.TraceID != "" {
+		errorData["trace_id"] = e.TraceID
+	}
+
+	if e.SpanID != "" {
+		errorData["span_id"] = e.SpanID
+	}
+
+	// Include filtered metadata
+	if len(metadata) > 0 {
+		errorData[JSON_FIELD_METADATA] = metadata
 	}
 
 	return map[string]interface{}{

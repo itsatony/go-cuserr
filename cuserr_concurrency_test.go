@@ -85,7 +85,7 @@ func TestConcurrentErrorCreation(t *testing.T) {
 			// Create error with metadata
 			err := NewCustomError(ErrNotFound, nil, fmt.Sprintf("concurrent error %d", id))
 			err.WithMetadata("goroutine_id", fmt.Sprintf("%d", id))
-			err.WithRequestID(fmt.Sprintf("req-%d", id))
+			err.OperationID = fmt.Sprintf("req-%d", id)
 
 			errors[id] = err
 		}(i)
@@ -114,9 +114,9 @@ func TestConcurrentErrorCreation(t *testing.T) {
 			t.Errorf("Error %d has wrong goroutine_id metadata", i)
 		}
 
-		expectedRequestID := fmt.Sprintf("req-%d", i)
-		if err.RequestID != expectedRequestID {
-			t.Errorf("Error %d has wrong request ID: %v", i, err.RequestID)
+		expectedOperationID := fmt.Sprintf("req-%d", i)
+		if err.OperationID != expectedOperationID {
+			t.Errorf("Error %d has wrong operation ID: %v", i, err.OperationID)
 		}
 	}
 }
@@ -172,7 +172,7 @@ func TestRaceConditionWithConfig(t *testing.T) {
 // TestConcurrentJSONSerialization tests concurrent JSON operations
 func TestConcurrentJSONSerialization(t *testing.T) {
 	err := NewCustomError(ErrInternal, nil, "concurrent JSON test")
-	err.WithRequestID("req-123")
+	err.OperationID = "req-123"
 
 	const numGoroutines = 30
 	var wg sync.WaitGroup

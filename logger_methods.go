@@ -47,8 +47,8 @@ func (e *CustomError) toLogFields() []Field {
 		{Key: "timestamp", Value: e.Timestamp},
 	}
 
-	if e.RequestID != "" {
-		fields = append(fields, Field{Key: "request_id", Value: e.RequestID})
+	if e.OperationID != "" {
+		fields = append(fields, Field{Key: "operation_id", Value: e.OperationID})
 	}
 
 	// Add metadata

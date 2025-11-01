@@ -226,8 +226,8 @@ func TestHighFrequencyOperations(t *testing.T) {
 	t.Run("High Frequency JSON Serialization", func(t *testing.T) {
 		err := NewCustomError(ErrInvalidInput, nil, "JSON performance test").
 			WithMetadata("field", "email").
-			WithMetadata("value", "invalid@").
-			WithRequestID("req-perf-test")
+			WithMetadata("value", "invalid@")
+		err.OperationID = "req-perf-test"
 
 		const numOperations = 5000
 		start := time.Now()
@@ -512,8 +512,8 @@ func BenchmarkErrorCreation(b *testing.B) {
 func BenchmarkJSONSerialization(b *testing.B) {
 	err := NewCustomError(ErrInvalidInput, nil, "benchmark JSON error").
 		WithMetadata("field", "email").
-		WithMetadata("reason", "invalid format").
-		WithRequestID("req-bench-123")
+		WithMetadata("reason", "invalid format")
+	err.OperationID = "req-bench-123"
 
 	b.Run("ToJSON", func(b *testing.B) {
 		b.ResetTimer()
@@ -529,7 +529,7 @@ func BenchmarkJSONSerialization(b *testing.B) {
 		}
 	})
 
-	b.Run("ToClientJSON", func(b *testing.B) {
+	b.Run("ToPublicJSON", func(b *testing.B) {
 		originalConfig := GetConfig()
 		defer SetConfig(originalConfig)
 
@@ -540,7 +540,7 @@ func BenchmarkJSONSerialization(b *testing.B) {
 
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_ = err.ToClientJSON()
+			_ = err.ToPublicJSON()
 		}
 	})
 }

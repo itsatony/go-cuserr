@@ -23,8 +23,8 @@ func TestErrorChainIntegrity(t *testing.T) {
 
 	apiErr := NewCustomError(ErrInternal, serviceErr, "API request failed").
 		WithMetadata("endpoint", "/api/users/123").
-		WithMetadata("method", http.MethodGet).
-		WithRequestID("req-chain-test")
+		WithMetadata("method", http.MethodGet)
+	apiErr.OperationID = "req-chain-test"
 
 	// Test error chain integrity
 	t.Run("Error Chain Navigation", func(t *testing.T) {
@@ -106,15 +106,15 @@ func TestErrorChainIntegrity(t *testing.T) {
 
 	t.Run("Request ID Propagation", func(t *testing.T) {
 		// Only the top-level error should have request ID
-		if apiErr.RequestID != "req-chain-test" {
+		if apiErr.OperationID != "req-chain-test" {
 			t.Error("API error should have request ID")
 		}
 
-		if serviceErr.RequestID != "" {
+		if serviceErr.OperationID != "" {
 			t.Error("Service error should not have request ID")
 		}
 
-		if dbErr.RequestID != "" {
+		if dbErr.OperationID != "" {
 			t.Error("Database error should not have request ID")
 		}
 	})
@@ -136,8 +136,8 @@ func TestErrorChainDebugging(t *testing.T) {
 
 	appErr := NewCustomError(ErrInternal, configErr, "application startup failed").
 		WithMetadata("component", "main").
-		WithMetadata("startup_time", "2023-10-15T10:30:00Z").
-		WithRequestID("req-startup-001")
+		WithMetadata("startup_time", "2023-10-15T10:30:00Z")
+	appErr.OperationID = "req-startup-001"
 
 	t.Run("Debugging Information Extraction", func(t *testing.T) {
 		// Test detailed error output for debugging
@@ -333,8 +333,8 @@ func TestComplexErrorChainScenarios(t *testing.T) {
 		// API gateway error
 		gatewayErr := NewCustomError(ErrInternal, orderErr, "checkout process failed").
 			WithMetadata("endpoint", "/api/checkout").
-			WithMetadata("user_agent", "mobile-app/1.2.3").
-			WithRequestID("req-checkout-001")
+			WithMetadata("user_agent", "mobile-app/1.2.3")
+		gatewayErr.OperationID = "req-checkout-001"
 
 		// Test complete error information is accessible
 		if !errors.Is(gatewayErr, externalErr) {
@@ -409,8 +409,8 @@ func TestComplexErrorChainScenarios(t *testing.T) {
 		// Controller error
 		controllerErr := NewCustomError(ErrAlreadyExists, businessErr, "account creation unsuccessful").
 			WithMetadata("handler", "POST /register").
-			WithMetadata("client_ip", "10.0.1.5").
-			WithRequestID("req-register-002")
+			WithMetadata("client_ip", "10.0.1.5")
+		controllerErr.OperationID = "req-register-002"
 
 		// Test error categorization remains consistent
 		if controllerErr.Category != ErrorCategoryConflict {

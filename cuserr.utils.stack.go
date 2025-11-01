@@ -55,8 +55,8 @@ func (e *CustomError) DetailedError() string {
 	sb.WriteString(fmt.Sprintf(LOG_TEMPLATE_ERROR_DETAIL, e.Message, e.Category, e.Code))
 	sb.WriteString("\n")
 
-	if e.RequestID != "" {
-		sb.WriteString(fmt.Sprintf(LOG_TEMPLATE_REQUEST_ID, e.RequestID))
+	if e.OperationID != "" {
+		sb.WriteString(fmt.Sprintf("Operation ID: %s", e.OperationID))
 		sb.WriteString("\n")
 	}
 
@@ -93,9 +93,9 @@ func (e *CustomError) DetailedError() string {
 
 // ShortError returns a concise error representation for logging
 func (e *CustomError) ShortError() string {
-	if e.RequestID != "" {
+	if e.OperationID != "" {
 		return fmt.Sprintf("[%s] %s (%s): %s",
-			e.RequestID, e.Category, e.Code, e.Message)
+			e.OperationID, e.Category, e.Code, e.Message)
 	}
 	return fmt.Sprintf("%s (%s): %s", e.Category, e.Code, e.Message)
 }

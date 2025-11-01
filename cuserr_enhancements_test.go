@@ -68,8 +68,8 @@ func TestContextBasedConfiguration(t *testing.T) {
 		ctx := context.WithValue(context.Background(), testKeyRequestID, "req-ctx-test")
 		err := NewValidationErrorFromContext(ctx, "email", "invalid format")
 
-		if err.RequestID != "req-ctx-test" {
-			t.Errorf("Expected request ID 'req-ctx-test', got %s", err.RequestID)
+		if err.OperationID != "req-ctx-test" {
+			t.Errorf("Expected operation ID 'req-ctx-test', got %s", err.OperationID)
 		}
 	})
 
@@ -134,8 +134,8 @@ func TestErrorAggregation(t *testing.T) {
 
 		collection := builder.Build()
 
-		if collection.RequestID != "req-builder-test" {
-			t.Error("Should extract request ID from context")
+		if collection.OperationID != "req-builder-test" {
+			t.Error("Should extract operation ID from context")
 		}
 
 		if collection.ValidationCount() != 2 {
@@ -147,7 +147,7 @@ func TestErrorAggregation(t *testing.T) {
 		collection := NewValidationErrorCollection()
 		collection.AddValidation("field1", "error1")
 		collection.AddValidation("field2", "error2")
-		collection.WithRequestID("req-aggregate-test")
+		collection.WithOperationID("req-aggregate-test")
 
 		customErr := collection.ToCustomError()
 		if customErr == nil {
@@ -158,8 +158,8 @@ func TestErrorAggregation(t *testing.T) {
 			t.Error("Should be validation category")
 		}
 
-		if customErr.RequestID != "req-aggregate-test" {
-			t.Error("Should preserve request ID")
+		if customErr.OperationID != "req-aggregate-test" {
+			t.Error("Should preserve operation ID")
 		}
 
 		if count, exists := customErr.GetMetadata("validation_error_count"); !exists || count != "2" {
@@ -247,8 +247,8 @@ func TestTypedMetadata(t *testing.T) {
 func TestStructuredLogging(t *testing.T) {
 	t.Run("Error to Log Fields", func(t *testing.T) {
 		err := NewValidationError("email", "invalid format").
-			WithRequestID("req-log-test").
 			WithMetadata("user_id", "usr_123")
+		err.OperationID = "req-log-test"
 
 		fields := err.ToLogFields()
 
@@ -256,8 +256,8 @@ func TestStructuredLogging(t *testing.T) {
 			t.Error("Should include error category in log fields")
 		}
 
-		if fields["request_id"] != "req-log-test" {
-			t.Error("Should include request ID in log fields")
+		if fields["operation_id"] != "req-log-test" {
+			t.Error("Should include operation ID in log fields")
 		}
 
 		if fields["meta_user_id"] != "usr_123" {
@@ -273,7 +273,7 @@ func TestStructuredLogging(t *testing.T) {
 		collection := NewValidationErrorCollection()
 		collection.AddValidation("email", "required")
 		collection.AddValidation("password", "too short")
-		collection.WithRequestID("req-collection-log")
+		collection.WithOperationID("req-collection-log")
 
 		fields := collection.ToLogFields()
 
@@ -285,8 +285,8 @@ func TestStructuredLogging(t *testing.T) {
 			t.Error("Should include total error count")
 		}
 
-		if fields["request_id"] != "req-collection-log" {
-			t.Error("Should include request ID")
+		if fields["operation_id"] != "req-collection-log" {
+			t.Error("Should include operation ID")
 		}
 
 		validationFields, ok := fields["validation_fields"].([]string)
@@ -374,7 +374,7 @@ func TestErrorBuilder(t *testing.T) {
 			WithMessage("validation failed").
 			WithMetadata("field", "email").
 			WithMetadata("value", "invalid@").
-			WithRequestID("req-builder-test").
+			WithOperationID("req-builder-test").
 			Build()
 
 		if err.Category != ErrorCategoryValidation {
@@ -385,8 +385,8 @@ func TestErrorBuilder(t *testing.T) {
 			t.Error("Should set message")
 		}
 
-		if err.RequestID != "req-builder-test" {
-			t.Error("Should set request ID")
+		if err.OperationID != "req-builder-test" {
+			t.Error("Should set operation ID")
 		}
 
 		if field, exists := err.GetMetadata("field"); !exists || field != "email" {
@@ -422,7 +422,7 @@ func TestErrorCollectionJSONSerialization(t *testing.T) {
 		collection := NewValidationErrorCollection()
 		collection.AddValidation("email", "required field")
 		collection.AddValidation("password", "too short")
-		collection.WithRequestID("req-json-test")
+		collection.WithOperationID("req-json-test")
 
 		jsonResult := collection.ToJSON()
 
@@ -444,8 +444,8 @@ func TestErrorCollectionJSONSerialization(t *testing.T) {
 			t.Error("Should set MULTIPLE_ERRORS code")
 		}
 
-		if errorData["request_id"] != "req-json-test" {
-			t.Error("Should include request ID")
+		if errorData["operation_id"] != "req-json-test" {
+			t.Error("Should include operation ID")
 		}
 
 		validationErrors, exists := errorData["validation_errors"]
@@ -464,14 +464,14 @@ func TestErrorCollectionJSONSerialization(t *testing.T) {
 		collection := NewErrorCollection("multiple issues")
 		collection.Add(NewInternalError("database", fmt.Errorf("connection failed")))
 		collection.AddValidation("email", "invalid format")
-		collection.WithRequestID("req-client-test")
+		collection.WithOperationID("req-client-test")
 
 		// Test in production mode
 		originalConfig := GetConfig()
 		defer SetConfig(originalConfig)
 		SetConfig(&Config{ProductionMode: true, EnableStackTrace: false})
 
-		clientJSON := collection.ToClientJSON()
+		clientJSON := collection.ToPublicJSON()
 
 		// Verify client-safe structure
 		if clientJSON == nil {
@@ -485,9 +485,9 @@ func TestErrorCollectionJSONSerialization(t *testing.T) {
 			t.Error("Should preserve validation errors in client JSON")
 		}
 
-		// Should include request ID
-		if errorData["request_id"] != "req-client-test" {
-			t.Error("Should include request ID in client JSON")
+		// Should include operation ID
+		if errorData["operation_id"] != "req-client-test" {
+			t.Error("Should include operation ID in client JSON")
 		}
 	})
 
@@ -533,7 +533,8 @@ func TestStructuredLoggingFunctionality(t *testing.T) {
 
 		// Test logging functionality
 		ctx := context.Background()
-		err := NewValidationError("email", "invalid format").WithRequestID("req-log-test")
+		err := NewValidationError("email", "invalid format")
+		err.OperationID = "req-log-test"
 
 		// This should not panic
 		logger.LogError(ctx, err)
@@ -873,8 +874,8 @@ func TestUncoveredBuilderMethods(t *testing.T) {
 			WithContext(ctx).
 			Build()
 
-		if contextErr.RequestID != "req_builder_context" {
-			t.Error("WithContext should extract request ID")
+		if contextErr.OperationID != "req_builder_context" {
+			t.Error("WithContext should extract operation ID")
 		}
 	})
 
@@ -986,7 +987,7 @@ func TestUncoveredErrorCollectionMethods(t *testing.T) {
 	t.Run("Collection JSON Marshaling", func(t *testing.T) {
 		collection := NewValidationErrorCollection()
 		collection.AddValidation("email", "required")
-		collection.WithRequestID("req-marshal-test")
+		collection.WithOperationID("req-marshal-test")
 
 		// Test MarshalJSON method
 		jsonBytes, err := collection.MarshalJSON()

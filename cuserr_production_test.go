@@ -61,13 +61,13 @@ func TestProductionConfiguration(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				err := NewCustomErrorWithCategory(tc.category, "TEST_CODE", tc.message)
 
-				clientMessage := err.ClientSafeMessage()
+				clientMessage := err.ToPublicJSON()[JSON_FIELD_ERROR].(map[string]interface{})[JSON_FIELD_MESSAGE].(string)
 				if clientMessage != tc.expectedMessage {
 					t.Errorf("Expected message '%s', got '%s'", tc.expectedMessage, clientMessage)
 				}
 
 				// Test in JSON format too
-				clientJSON := err.ToClientJSON()
+				clientJSON := err.ToPublicJSON()
 				errorData := clientJSON[JSON_FIELD_ERROR].(map[string]interface{})
 				jsonMessage := errorData[JSON_FIELD_MESSAGE].(string)
 
@@ -93,7 +93,7 @@ func TestProductionConfiguration(t *testing.T) {
 			WithMetadata("api_key", "key_sensitive").       // Sensitive - should be removed
 			WithMetadata("internal_debug", "stack_info")    // Sensitive - should be removed
 
-		clientJSON := err.ToClientJSON()
+		clientJSON := err.ToPublicJSON()
 		errorData := clientJSON[JSON_FIELD_ERROR].(map[string]interface{})
 		metadata, hasMetadata := errorData[JSON_FIELD_METADATA].(map[string]string)
 
@@ -134,13 +134,13 @@ func TestProductionConfiguration(t *testing.T) {
 			WithMetadata("user_id", "usr_123")
 
 		// In development mode, should show detailed message
-		clientMessage := err.ClientSafeMessage()
+		clientMessage := err.ToPublicJSON()[JSON_FIELD_ERROR].(map[string]interface{})[JSON_FIELD_MESSAGE].(string)
 		if clientMessage != "detailed internal error with sensitive info" {
 			t.Error("Development mode should show detailed messages")
 		}
 
 		// Should preserve all metadata
-		clientJSON := err.ToClientJSON()
+		clientJSON := err.ToPublicJSON()
 		errorData := clientJSON[JSON_FIELD_ERROR].(map[string]interface{})
 		metadata := errorData[JSON_FIELD_METADATA].(map[string]string)
 
@@ -171,8 +171,8 @@ func TestConfigurationTransitions(t *testing.T) {
 			WithMetadata("user_id", "usr_456")
 
 		// Should show detailed info in development
-		devMessage := err.ClientSafeMessage()
-		devJSON := err.ToClientJSON()
+		devMessage := err.ToPublicJSON()[JSON_FIELD_ERROR].(map[string]interface{})[JSON_FIELD_MESSAGE].(string)
+		devJSON := err.ToPublicJSON()
 		devErrorData := devJSON[JSON_FIELD_ERROR].(map[string]interface{})
 		devMetadata := devErrorData[JSON_FIELD_METADATA].(map[string]string)
 
@@ -190,8 +190,8 @@ func TestConfigurationTransitions(t *testing.T) {
 		})
 
 		// Same error should now be filtered
-		prodMessage := err.ClientSafeMessage()
-		prodJSON := err.ToClientJSON()
+		prodMessage := err.ToPublicJSON()[JSON_FIELD_ERROR].(map[string]interface{})[JSON_FIELD_MESSAGE].(string)
+		prodJSON := err.ToPublicJSON()
 		prodErrorData := prodJSON[JSON_FIELD_ERROR].(map[string]interface{})
 		prodMetadata := prodErrorData[JSON_FIELD_METADATA].(map[string]string)
 
@@ -271,8 +271,8 @@ func TestProductionReliability(t *testing.T) {
 		// Create many errors quickly
 		for i := 0; i < numErrors; i++ {
 			errors[i] = NewCustomError(ErrInternal, nil, "high volume test error").
-				WithMetadata("iteration", string(rune(i))).
-				WithRequestID("req-volume-test")
+				WithMetadata("iteration", string(rune(i)))
+			errors[i].OperationID = "req-volume-test"
 		}
 
 		duration := time.Since(start)
@@ -294,7 +294,7 @@ func TestProductionReliability(t *testing.T) {
 			}
 
 			// In production, internal errors should be filtered
-			if err.ClientSafeMessage() != "An internal error occurred" {
+			if err.ToPublicJSON()[JSON_FIELD_ERROR].(map[string]interface{})[JSON_FIELD_MESSAGE].(string) != "An internal error occurred" {
 				t.Errorf("Error %d should be filtered in production", i)
 			}
 		}
@@ -356,7 +356,7 @@ func TestProductionReliability(t *testing.T) {
 			go func() {
 				defer wg.Done()
 				for j := 0; j < numOperations; j++ {
-					_ = err.ToClientJSON()
+					_ = err.ToPublicJSON()
 					time.Sleep(time.Microsecond)
 				}
 			}()
@@ -408,7 +408,7 @@ func TestProductionSecurityFiltering(t *testing.T) {
 			err.WithMetadata(key, value)
 		}
 
-		clientJSON := err.ToClientJSON()
+		clientJSON := err.ToPublicJSON()
 		errorData := clientJSON[JSON_FIELD_ERROR].(map[string]interface{})
 		metadata, hasMetadata := errorData[JSON_FIELD_METADATA].(map[string]string)
 
@@ -468,7 +468,7 @@ func TestProductionSecurityFiltering(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.message, func(t *testing.T) {
 				err := NewCustomErrorWithCategory(tc.category, "TEST_CODE", tc.message)
-				clientMessage := err.ClientSafeMessage()
+				clientMessage := err.ToPublicJSON()[JSON_FIELD_ERROR].(map[string]interface{})[JSON_FIELD_MESSAGE].(string)
 
 				if tc.shouldBeFiltered {
 					if clientMessage == tc.message {

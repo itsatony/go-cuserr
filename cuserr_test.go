@@ -124,10 +124,10 @@ func TestCustomError_WithRequestID(t *testing.T) {
 	err := NewCustomError(ErrNotFound, nil, "test error")
 	requestID := "req-123"
 
-	err.WithRequestID(requestID)
+	err.OperationID = requestID
 
-	if err.RequestID != requestID {
-		t.Errorf("RequestID = %v, want %v", err.RequestID, requestID)
+	if err.OperationID != requestID {
+		t.Errorf("RequestID = %v, want %v", err.OperationID, requestID)
 	}
 }
 
@@ -218,7 +218,8 @@ func TestCustomError_ToHTTPStatus(t *testing.T) {
 
 func TestCustomError_ToJSON(t *testing.T) {
 	err := NewCustomError(ErrNotFound, nil, "user not found")
-	err.WithMetadata("user_id", "123").WithRequestID("req-456")
+	err.WithMetadata("user_id", "123")
+	err.OperationID = "req-456"
 
 	jsonData := err.ToJSON()
 
@@ -239,8 +240,8 @@ func TestCustomError_ToJSON(t *testing.T) {
 		t.Errorf("JSON category = %v, want %v", errorData[JSON_FIELD_CATEGORY], ErrorCategoryNotFound)
 	}
 
-	if errorData[JSON_FIELD_REQUEST_ID] != "req-456" {
-		t.Errorf("JSON request_id = %v, want %v", errorData[JSON_FIELD_REQUEST_ID], "req-456")
+	if errorData[JSON_FIELD_OPERATION_ID] != "req-456" {
+		t.Errorf("JSON operation_id = %v, want %v", errorData[JSON_FIELD_OPERATION_ID], "req-456")
 	}
 }
 

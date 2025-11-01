@@ -42,12 +42,12 @@ func TestContextExtractionResilience(t *testing.T) {
 				err := NewValidationErrorFromContext(ctx, "test_field", "test error")
 
 				if tc.expected == "" {
-					if err.RequestID != "" {
-						t.Errorf("Expected empty request ID for %s, got %s", tc.name, err.RequestID)
+					if err.OperationID != "" {
+						t.Errorf("Expected empty operation ID for %s, got %s", tc.name, err.OperationID)
 					}
 				} else {
-					if err.RequestID != tc.expected {
-						t.Errorf("Expected request ID %s for %s, got %s", tc.expected, tc.name, err.RequestID)
+					if err.OperationID != tc.expected {
+						t.Errorf("Expected operation ID %s for %s, got %s", tc.expected, tc.name, err.OperationID)
 					}
 				}
 			})
@@ -96,8 +96,8 @@ func TestContextExtractionResilience(t *testing.T) {
 			t.Run(constructor.name, func(t *testing.T) {
 				err := constructor.test()
 
-				// All should extract request ID from context
-				if err.RequestID != "req_comprehensive" {
+				// All should extract operation ID from context
+				if err.OperationID != "req_comprehensive" {
 					t.Errorf("%s should extract request_id from context", constructor.name)
 				}
 
@@ -155,8 +155,8 @@ func TestContextExtractionResilience(t *testing.T) {
 		builder := NewContextualErrorBuilder(complexCtx, ErrTimeout)
 		err = builder.Build()
 
-		if err.RequestID != "req_complex" {
-			t.Error("ContextualErrorBuilder should extract request ID")
+		if err.OperationID != "req_complex" {
+			t.Error("ContextualErrorBuilder should extract operation ID")
 		}
 
 		// Test error handler integration
@@ -437,8 +437,8 @@ func TestLoggingFrameworkIntegration(t *testing.T) {
 
 		// Test individual logging level methods (currently 0% coverage)
 		err := NewInternalError("test_component", fmt.Errorf("test error")).
-			WithRequestID("req_logging_test").
 			WithMetadata("operation", "test_operation")
+		err.OperationID = "req_logging_test"
 
 		// Test LogWith method
 		err.LogWith(ctx, logger)
@@ -452,7 +452,7 @@ func TestLoggingFrameworkIntegration(t *testing.T) {
 		collection := NewValidationErrorCollection()
 		collection.AddValidation("field1", "error1")
 		collection.AddValidation("field2", "error2")
-		collection.WithRequestID("req_collection_logging")
+		collection.WithOperationID("req_collection_logging")
 
 		collection.LogWith(ctx, logger)
 
@@ -604,14 +604,14 @@ func TestTypedMetadataSessionAndTracing(t *testing.T) {
 		tm := err.GetTypedMetadata()
 
 		// Test WithRequestID through typed metadata
-		tm.WithRequestID("req_typed_metadata")
+		tm.WithOperationID("req_typed_metadata")
 
-		if requestID := tm.GetRequestID(); requestID != "req_typed_metadata" {
-			t.Error("Should set request ID through typed metadata")
+		if requestID := tm.GetOperationID(); requestID != "req_typed_metadata" {
+			t.Error("Should set operation ID through typed metadata")
 		}
 
 		// Verify it's also set on the underlying error
-		if err.RequestID != "req_typed_metadata" {
+		if err.OperationID != "req_typed_metadata" {
 			t.Error("Typed metadata WithRequestID should update underlying error")
 		}
 	})
@@ -785,8 +785,8 @@ func TestMigrationSystemEdgeCases(t *testing.T) {
 func TestUtilityFunctionCompleteness(t *testing.T) {
 	t.Run("JSON String Serialization", func(t *testing.T) {
 		err := NewValidationError("email", "invalid format").
-			WithRequestID("req_json_string").
 			WithMetadata("component", "user_validator")
+		err.OperationID = "req_json_string"
 
 		// Test ToJSONString method (currently 0% coverage)
 		jsonString := err.ToJSONString()
@@ -802,8 +802,11 @@ func TestUtilityFunctionCompleteness(t *testing.T) {
 		}
 
 		// Verify structure contains expected fields
-		if !strings.Contains(jsonString, "invalid format") || !strings.Contains(jsonString, "req_json_string") {
-			t.Error("ToJSONString should contain error message and request ID")
+		if !strings.Contains(jsonString, "invalid format") {
+			t.Errorf("ToJSONString should contain error message 'invalid format', got: %s", jsonString)
+		}
+		if !strings.Contains(jsonString, "req_json_string") {
+			t.Errorf("ToJSONString should contain operation ID 'req_json_string', got: %s", jsonString)
 		}
 	})
 

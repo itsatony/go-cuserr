@@ -93,15 +93,15 @@ func (tm *TypedMetadata) GetUserID() (string, bool) {
 	return tm.err.GetMetadata(MetaUserID)
 }
 
-// WithRequestID adds request ID metadata
-func (tm *TypedMetadata) WithRequestID(requestID string) *TypedMetadata {
-	tm.err.WithRequestID(requestID) // Use existing method
+// WithOperationID adds operation ID metadata
+func (tm *TypedMetadata) WithOperationID(operationID string) *TypedMetadata {
+	tm.err.OperationID = operationID
 	return tm
 }
 
-// GetRequestID retrieves request ID
-func (tm *TypedMetadata) GetRequestID() string {
-	return tm.err.RequestID
+// GetOperationID retrieves operation ID
+func (tm *TypedMetadata) GetOperationID() string {
+	return tm.err.OperationID
 }
 
 // WithSessionID adds session ID metadata

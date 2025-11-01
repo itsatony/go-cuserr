@@ -122,8 +122,8 @@ func (e *CustomError) ToLogFields() map[string]interface{} {
 		"timestamp":      e.Timestamp.Format(time.RFC3339),
 	}
 
-	if e.RequestID != "" {
-		fields["request_id"] = e.RequestID
+	if e.OperationID != "" {
+		fields["operation_id"] = e.OperationID
 	}
 
 	// Add metadata
@@ -203,8 +203,8 @@ func (ec *ErrorCollection) ToLogFields() map[string]interface{} {
 		"timestamp":              time.Now().UTC().Format(time.RFC3339),
 	}
 
-	if ec.RequestID != "" {
-		fields["request_id"] = ec.RequestID
+	if ec.OperationID != "" {
+		fields["operation_id"] = ec.OperationID
 	}
 
 	// Add context metadata

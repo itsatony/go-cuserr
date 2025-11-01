@@ -94,7 +94,7 @@ func BenchmarkDetailedError(b *testing.B) {
 	err := NewCustomError(ErrNotFound, wrapped, "benchmark detailed error")
 	err.WithMetadata("user_id", "123")
 	err.WithMetadata("action", "get_user")
-	err.WithRequestID("req-456")
+	err.OperationID = "req-456"
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -105,7 +105,7 @@ func BenchmarkDetailedError(b *testing.B) {
 // BenchmarkShortError benchmarks short error string generation
 func BenchmarkShortError(b *testing.B) {
 	err := NewCustomError(ErrNotFound, nil, "benchmark short error")
-	err.WithRequestID("req-789")
+	err.OperationID = "req-789"
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -118,7 +118,7 @@ func BenchmarkToJSON(b *testing.B) {
 	err := NewCustomError(ErrInternal, nil, "benchmark JSON serialization")
 	err.WithMetadata("user_id", "123")
 	err.WithMetadata("action", "create_user")
-	err.WithRequestID("req-json-test")
+	err.OperationID = "req-json-test"
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -131,7 +131,7 @@ func BenchmarkToJSONString(b *testing.B) {
 	err := NewCustomError(ErrInternal, nil, "benchmark JSON string serialization")
 	err.WithMetadata("user_id", "123")
 	err.WithMetadata("action", "create_user")
-	err.WithRequestID("req-json-string-test")
+	err.OperationID = "req-json-string-test"
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

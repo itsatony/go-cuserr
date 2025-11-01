@@ -27,12 +27,12 @@ func TestHTTPIntegrationEndToEnd(t *testing.T) {
 		case "/users/not-found":
 			err := NewCustomError(ErrNotFound, nil, "user not found").
 				WithMetadata("user_id", "usr_404").
-				WithMetadata("operation", "get_user").
-				WithRequestID(requestID)
+				WithMetadata("operation", "get_user")
+			err.OperationID = requestID
 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(err.ToHTTPStatus())
-			if encodeErr := json.NewEncoder(w).Encode(err.ToClientJSON()); encodeErr != nil {
+			if encodeErr := json.NewEncoder(w).Encode(err.ToPublicJSON()); encodeErr != nil {
 				http.Error(w, "JSON encoding failed", http.StatusInternalServerError)
 				return
 			}
@@ -40,8 +40,8 @@ func TestHTTPIntegrationEndToEnd(t *testing.T) {
 		case "/validation-error":
 			err := NewCustomError(ErrInvalidInput, nil, "email format is invalid").
 				WithMetadata("field", "email").
-				WithMetadata("value", "invalid-email").
-				WithRequestID(requestID)
+				WithMetadata("value", "invalid-email")
+			err.OperationID = requestID
 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(err.ToHTTPStatus())
@@ -54,12 +54,12 @@ func TestHTTPIntegrationEndToEnd(t *testing.T) {
 			originalErr := fmt.Errorf("database connection failed")
 			err := NewCustomError(ErrInternal, originalErr, "failed to process request").
 				WithMetadata("database", "users_db").
-				WithMetadata("retry_count", "3").
-				WithRequestID(requestID)
+				WithMetadata("retry_count", "3")
+			err.OperationID = requestID
 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(err.ToHTTPStatus())
-			if encodeErr := json.NewEncoder(w).Encode(err.ToClientJSON()); encodeErr != nil {
+			if encodeErr := json.NewEncoder(w).Encode(err.ToPublicJSON()); encodeErr != nil {
 				http.Error(w, "JSON encoding failed", http.StatusInternalServerError)
 				return
 			}
@@ -67,8 +67,8 @@ func TestHTTPIntegrationEndToEnd(t *testing.T) {
 		case "/rate-limit":
 			err := NewCustomError(ErrRateLimit, nil, "API rate limit exceeded").
 				WithMetadata("limit", "1000/hour").
-				WithMetadata("reset_at", time.Now().Add(time.Hour).Format(time.RFC3339)).
-				WithRequestID(requestID)
+				WithMetadata("reset_at", time.Now().Add(time.Hour).Format(time.RFC3339))
+			err.OperationID = requestID
 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(err.ToHTTPStatus())
@@ -185,14 +185,14 @@ func TestHTTPIntegrationEndToEnd(t *testing.T) {
 				t.Error("Response should contain code field")
 			}
 
-			// Verify request ID if expected
+			// Verify operation ID if expected
 			if tc.checkRequestID {
-				if requestID, ok := errorData["request_id"].(string); ok {
+				if requestID, ok := errorData["operation_id"].(string); ok {
 					if !strings.Contains(requestID, "req-") {
 						t.Errorf("Request ID should contain 'req-', got %s", requestID)
 					}
 				} else {
-					t.Error("Response should contain request_id field")
+					t.Error("Response should contain operation_id field")
 				}
 			}
 
@@ -239,10 +239,10 @@ func TestHTTPProductionFiltering(t *testing.T) {
 
 	err := NewCustomError(ErrInternal, nil, "detailed internal error with sensitive data").
 		WithMetadata("database_password", "secret123").
-		WithMetadata("user_id", "usr_789").
-		WithRequestID("req-dev-test")
+		WithMetadata("user_id", "usr_789")
+	err.OperationID = "req-dev-test"
 
-	devJSON := err.ToClientJSON()
+	devJSON := err.ToPublicJSON()
 	devErrorData := devJSON[JSON_FIELD_ERROR].(map[string]interface{})
 
 	// In development mode, should show detailed message
@@ -262,7 +262,7 @@ func TestHTTPProductionFiltering(t *testing.T) {
 		ProductionMode:   true,
 	})
 
-	prodJSON := err.ToClientJSON()
+	prodJSON := err.ToPublicJSON()
 	prodErrorData := prodJSON[JSON_FIELD_ERROR].(map[string]interface{})
 
 	// In production mode, should show generic message for internal errors
@@ -296,12 +296,12 @@ func TestHTTPMiddlewarePattern(t *testing.T) {
 			defer func() {
 				if recovered := recover(); recovered != nil {
 					err := NewCustomError(ErrInternal, nil, "unexpected server error").
-						WithMetadata("panic", fmt.Sprintf("%v", recovered)).
-						WithRequestID(r.Header.Get("X-Request-ID"))
+						WithMetadata("panic", fmt.Sprintf("%v", recovered))
+					err.OperationID = r.Header.Get("X-Request-ID")
 
 					w.Header().Set("Content-Type", "application/json")
 					w.WriteHeader(err.ToHTTPStatus())
-					json.NewEncoder(w).Encode(err.ToClientJSON())
+					json.NewEncoder(w).Encode(err.ToPublicJSON())
 				}
 			}()
 
@@ -361,8 +361,8 @@ func TestHTTPMiddlewarePattern(t *testing.T) {
 			t.Error("Panic should be categorized as internal error")
 		}
 
-		if errorData["request_id"] != "req-panic-test" {
-			t.Error("Should preserve request ID from header")
+		if errorData["operation_id"] != "req-panic-test" {
+			t.Error("Should preserve operation ID from header")
 		}
 
 		// Verify panic information is captured
@@ -378,7 +378,7 @@ func TestHTTPMiddlewarePattern(t *testing.T) {
 func TestContextIntegration(t *testing.T) {
 	// Simulate a service that uses context for request tracing
 	processWithContext := func(ctx context.Context, userID string) error {
-		// Extract request ID from context
+		// Extract operation ID from context
 		requestID, ok := ctx.Value("request_id").(string)
 		if !ok {
 			requestID = "unknown"
@@ -387,16 +387,18 @@ func TestContextIntegration(t *testing.T) {
 		// Simulate timeout
 		select {
 		case <-ctx.Done():
-			return NewCustomError(ErrTimeout, ctx.Err(), "operation cancelled or timed out").
+			err := NewCustomError(ErrTimeout, ctx.Err(), "operation cancelled or timed out").
 				WithMetadata("user_id", userID).
-				WithMetadata("operation", "process_data").
-				WithRequestID(requestID)
+				WithMetadata("operation", "process_data")
+			err.OperationID = requestID
+			return err
 		case <-time.After(10 * time.Millisecond):
 			// Normal processing
 			if userID == "invalid" {
-				return NewCustomError(ErrInvalidInput, nil, "invalid user ID").
-					WithMetadata("user_id", userID).
-					WithRequestID(requestID)
+				err := NewCustomError(ErrInvalidInput, nil, "invalid user ID").
+					WithMetadata("user_id", userID)
+				err.OperationID = requestID
+				return err
 			}
 			return nil
 		}
@@ -433,8 +435,8 @@ func TestContextIntegration(t *testing.T) {
 			t.Error("Should be categorized as timeout error")
 		}
 
-		if customErr.RequestID != "req-ctx-timeout" {
-			t.Error("Should preserve request ID from context")
+		if customErr.OperationID != "req-ctx-timeout" {
+			t.Error("Should preserve operation ID from context")
 		}
 
 		// Verify wrapped context error
@@ -464,8 +466,8 @@ func TestContextIntegration(t *testing.T) {
 			t.Error("Should capture user_id in metadata")
 		}
 
-		if customErr.RequestID != "req-ctx-validation" {
-			t.Error("Should preserve request ID from context")
+		if customErr.OperationID != "req-ctx-validation" {
+			t.Error("Should preserve operation ID from context")
 		}
 	})
 }

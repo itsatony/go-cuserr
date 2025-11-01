@@ -25,8 +25,8 @@ func TestOptionsPattern(t *testing.T) {
 			WithContext(ctx),
 		)
 
-		if err.RequestID != "req-test-123" {
-			t.Errorf("WithContext did not extract request_id, got: %s", err.RequestID)
+		if err.OperationID != "req-test-123" {
+			t.Errorf("WithContext did not extract request_id, got: %s", err.OperationID)
 		}
 	})
 
@@ -71,13 +71,13 @@ func TestOptionsPattern(t *testing.T) {
 		}
 	})
 
-	t.Run("WithRequestID option sets request ID", func(t *testing.T) {
+	t.Run("WithOperationID option sets operation ID", func(t *testing.T) {
 		err := NewInternalError("database", nil,
-			WithRequestID("custom-req-999"),
+			WithOperationID("custom-op-999"),
 		)
 
-		if err.RequestID != "custom-req-999" {
-			t.Errorf("WithRequestID did not set request ID, got: %s", err.RequestID)
+		if err.OperationID != "custom-op-999" {
+			t.Errorf("WithOperationID did not set operation ID, got: %s", err.OperationID)
 		}
 	})
 
@@ -131,9 +131,9 @@ func TestOptionsPattern(t *testing.T) {
 			t.Error("Multiple options: logger not set")
 		}
 
-		// Verify request ID from context
-		if err.RequestID != "req-multi-test" {
-			t.Errorf("Multiple options: request ID not extracted, got: %s", err.RequestID)
+		// Verify operation ID from context
+		if err.OperationID != "req-multi-test" {
+			t.Errorf("Multiple options: operation ID not extracted, got: %s", err.OperationID)
 		}
 
 		// Verify user ID from context
@@ -222,10 +222,10 @@ func TestLoggerMethods(t *testing.T) {
 				foundCode = true
 			case "timestamp":
 				foundTimestamp = true
-			case "request_id":
+			case "operation_id":
 				foundRequestID = true
 				if field.Value != "req-log-test" {
-					t.Errorf("request_id value incorrect: got %v, want req-log-test", field.Value)
+					t.Errorf("operation_id value incorrect: got %v, want req-log-test", field.Value)
 				}
 			case "query":
 				foundQuery = true
@@ -245,7 +245,7 @@ func TestLoggerMethods(t *testing.T) {
 			t.Error("toLogFields missing timestamp field")
 		}
 		if !foundRequestID {
-			t.Error("toLogFields missing request_id field from context")
+			t.Error("toLogFields missing operation_id field from context")
 		}
 		if !foundQuery {
 			t.Error("toLogFields missing query metadata")

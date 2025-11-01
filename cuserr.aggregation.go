@@ -26,8 +26,8 @@ type ErrorCollection struct {
 	ValidationErrors []ValidationError `json:"validation_errors,omitempty"`
 	// Summary provides a high-level description
 	Summary string `json:"summary"`
-	// RequestID for tracing
-	RequestID string `json:"request_id,omitempty"`
+	// OperationID for tracing
+	OperationID string `json:"operation_id,omitempty"`
 	// Context for additional metadata
 	Context map[string]string `json:"context,omitempty"`
 	// mu protects concurrent access
@@ -116,9 +116,9 @@ func (ec *ErrorCollection) AddFieldError(field string, err *CustomError) *ErrorC
 	return ec
 }
 
-// WithRequestID sets the request ID for the collection
-func (ec *ErrorCollection) WithRequestID(requestID string) *ErrorCollection {
-	ec.RequestID = requestID
+// WithOperationID sets the operation ID for the collection
+func (ec *ErrorCollection) WithOperationID(operationID string) *ErrorCollection {
+	ec.OperationID = operationID
 	return ec
 }
 
@@ -221,8 +221,8 @@ func (ec *ErrorCollection) ToCustomError() *CustomError {
 
 	err := NewCustomError(sentinel, nil, message)
 
-	if ec.RequestID != "" {
-		err.WithRequestID(ec.RequestID)
+	if ec.OperationID != "" {
+		err.OperationID = ec.OperationID
 	}
 
 	// Add error counts to metadata (fluent API - ignoring return values)
@@ -275,8 +275,8 @@ func (ec *ErrorCollection) ToJSON() map[string]interface{} {
 		},
 	}
 
-	if ec.RequestID != "" {
-		result["error"].(map[string]interface{})["request_id"] = ec.RequestID
+	if ec.OperationID != "" {
+		result["error"].(map[string]interface{})["operation_id"] = ec.OperationID
 	}
 
 	// Add validation errors if any
@@ -302,8 +302,21 @@ func (ec *ErrorCollection) ToJSON() map[string]interface{} {
 	return result
 }
 
-// ToClientJSON returns a client-safe JSON representation
-func (ec *ErrorCollection) ToClientJSON() map[string]interface{} {
+// ToPublicJSON returns a public-safe JSON representation suitable for external consumption.
+// This is the universal method that works across all protocols.
+//
+// Behavior:
+//   - In production mode, filters internal error details
+//   - Always includes validation errors (safe to expose)
+//   - Keeps safe identifiers (request_id, operation_id, trace_id)
+//
+// Example:
+//
+//	collection := cuserr.NewValidationErrorCollection()
+//	collection.AddValidation("email", "Invalid email format")
+//	collection.AddValidation("age", "Must be at least 18")
+//	json := collection.ToPublicJSON()
+func (ec *ErrorCollection) ToPublicJSON() map[string]interface{} {
 	result := ec.ToJSON()
 
 	// Remove internal error details if in production mode
@@ -320,8 +333,8 @@ func (ec *ErrorCollection) ToClientJSON() map[string]interface{} {
 			},
 		}
 
-		if ec.RequestID != "" {
-			safeResult["error"].(map[string]interface{})["request_id"] = ec.RequestID
+		if ec.OperationID != "" {
+			safeResult["error"].(map[string]interface{})["operation_id"] = ec.OperationID
 		}
 
 		// Keep validation errors as they're usually safe to expose
@@ -382,8 +395,8 @@ func (b *ErrorCollectionBuilder) WithContext(ctx context.Context) *ErrorCollecti
 	b.ctx = ctx
 	if ctx != nil {
 		// Auto-extract common context values
-		if requestID := GetRequestIDFromContext(ctx); requestID != "" {
-			b.collection.WithRequestID(requestID)
+		if operationID := GetRequestIDFromContext(ctx); operationID != "" {
+			b.collection.WithOperationID(operationID)
 		}
 		if userID := GetUserIDFromContext(ctx); userID != "" {
 			b.collection.WithContext("user_id", userID)

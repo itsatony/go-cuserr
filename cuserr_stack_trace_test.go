@@ -21,8 +21,8 @@ func TestDetailedError(t *testing.T) {
 	t.Run("Basic Detailed Error", func(t *testing.T) {
 		err := createTestErrorWithStack("test detailed error").
 			WithMetadata("component", "auth").
-			WithMetadata("user_id", "usr_123").
-			WithRequestID("req-detailed-001")
+			WithMetadata("user_id", "usr_123")
+		err.OperationID = "req-detailed-001"
 
 		detailed := err.DetailedError()
 
@@ -116,8 +116,8 @@ func TestDetailedError(t *testing.T) {
 func TestShortError(t *testing.T) {
 	t.Run("Short Error with Request ID", func(t *testing.T) {
 		err := NewCustomError(ErrUnauthorized, nil, "authentication failed").
-			WithMetadata("api_key", "key_123").
-			WithRequestID("req-short-001")
+			WithMetadata("api_key", "key_123")
+		err.OperationID = "req-short-001"
 
 		short := err.ShortError()
 
