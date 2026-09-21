@@ -95,6 +95,21 @@ const (
 	// JSON_FIELD_TIMESTAMP defines the JSON field name for timestamps
 	JSON_FIELD_TIMESTAMP = "timestamp"
 
+	// Log level names
+
+	// LOG_LEVEL_DEBUG is the wire name of the debug log level
+	LOG_LEVEL_DEBUG = "debug"
+	// LOG_LEVEL_INFO is the wire name of the info log level
+	LOG_LEVEL_INFO = "info"
+	// LOG_LEVEL_WARN is the wire name of the warn log level
+	LOG_LEVEL_WARN = "warn"
+	// LOG_LEVEL_ERROR is the wire name of the error log level.
+	// It shares its VALUE with JSON_FIELD_ERROR and nothing else: a log level
+	// and a JSON field are different things that happen to spell the same.
+	LOG_LEVEL_ERROR = "error"
+	// LOG_LEVEL_UNKNOWN is the fallback name for an unrecognised log level
+	LOG_LEVEL_UNKNOWN = "unknown"
+
 	// HTTP status codes
 
 	// HTTP_STATUS_BAD_REQUEST represents HTTP 400 Bad Request status

@@ -568,6 +568,9 @@ go fmt ./...
 
 # Run linter (if available)
 golangci-lint run
+
+# The full local CI gate — hosted GitHub Actions is retired, this is the gate
+make ci-local
 ```
 
 ## 🆕 v0.2.0 Detailed Features

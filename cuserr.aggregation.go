@@ -266,37 +266,37 @@ func (ec *ErrorCollection) ToJSON() map[string]interface{} {
 	defer ec.mu.RUnlock()
 
 	result := map[string]interface{}{
-		"error": map[string]interface{}{
-			"category":    string(ErrorCategoryValidation),
-			"code":        "MULTIPLE_ERRORS",
-			"message":     ec.Error(),
-			"summary":     ec.Summary,
-			"error_count": ec.Count(),
+		JSON_FIELD_ERROR: map[string]interface{}{
+			"category":         string(ErrorCategoryValidation),
+			JSON_FIELD_CODE:    "MULTIPLE_ERRORS",
+			JSON_FIELD_MESSAGE: ec.Error(),
+			"summary":          ec.Summary,
+			"error_count":      ec.Count(),
 		},
 	}
 
 	if ec.OperationID != "" {
-		result["error"].(map[string]interface{})["operation_id"] = ec.OperationID
+		result[JSON_FIELD_ERROR].(map[string]interface{})["operation_id"] = ec.OperationID
 	}
 
 	// Add validation errors if any
 	if len(ec.ValidationErrors) > 0 {
-		result["error"].(map[string]interface{})["validation_errors"] = ec.ValidationErrors
-		result["error"].(map[string]interface{})["validation_count"] = len(ec.ValidationErrors)
+		result[JSON_FIELD_ERROR].(map[string]interface{})["validation_errors"] = ec.ValidationErrors
+		result[JSON_FIELD_ERROR].(map[string]interface{})["validation_count"] = len(ec.ValidationErrors)
 	}
 
 	// Add regular errors if any
 	if len(ec.Errors) > 0 {
 		errorDetails := make([]map[string]interface{}, len(ec.Errors))
 		for i, err := range ec.Errors {
-			errorDetails[i] = err.ToJSON()["error"].(map[string]interface{})
+			errorDetails[i] = err.ToJSON()[JSON_FIELD_ERROR].(map[string]interface{})
 		}
-		result["error"].(map[string]interface{})["errors"] = errorDetails
+		result[JSON_FIELD_ERROR].(map[string]interface{})["errors"] = errorDetails
 	}
 
 	// Add context
 	if len(ec.Context) > 0 {
-		result["error"].(map[string]interface{})["context"] = ec.Context
+		result[JSON_FIELD_ERROR].(map[string]interface{})["context"] = ec.Context
 	}
 
 	return result
@@ -322,24 +322,24 @@ func (ec *ErrorCollection) ToPublicJSON() map[string]interface{} {
 	// Remove internal error details if in production mode
 	config := GetConfig()
 	if config.ProductionMode {
-		errorData := result["error"].(map[string]interface{})
+		errorData := result[JSON_FIELD_ERROR].(map[string]interface{})
 
 		// Keep only safe fields for validation errors
 		safeResult := map[string]interface{}{
-			"error": map[string]interface{}{
-				"category": errorData["category"],
-				"code":     errorData["code"],
-				"message":  errorData["message"],
+			JSON_FIELD_ERROR: map[string]interface{}{
+				"category":         errorData["category"],
+				JSON_FIELD_CODE:    errorData[JSON_FIELD_CODE],
+				JSON_FIELD_MESSAGE: errorData[JSON_FIELD_MESSAGE],
 			},
 		}
 
 		if ec.OperationID != "" {
-			safeResult["error"].(map[string]interface{})["operation_id"] = ec.OperationID
+			safeResult[JSON_FIELD_ERROR].(map[string]interface{})["operation_id"] = ec.OperationID
 		}
 
 		// Keep validation errors as they're usually safe to expose
 		if validationErrors, exists := errorData["validation_errors"]; exists {
-			safeResult["error"].(map[string]interface{})["validation_errors"] = validationErrors
+			safeResult[JSON_FIELD_ERROR].(map[string]interface{})["validation_errors"] = validationErrors
 		}
 
 		return safeResult

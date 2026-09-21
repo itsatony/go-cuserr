@@ -1,13 +1,8 @@
+version: "2"
 run:
-  timeout: 5m
   go: "1.21"
-
 linters:
   enable:
-    - errcheck
-    - govet
-    - typecheck
-    - unused
     - asasalint
     - asciicheck
     - bidichk
@@ -23,9 +18,8 @@ linters:
     - gocognit
     - goconst
     - gocyclo
-    - goimports
     - gomoddirectives
-    - gomodguard
+    - gomodguard_v2
     - goprintffuncname
     - gosec
     - lll
@@ -48,140 +42,152 @@ linters:
     - unconvert
     - usestdlibvars
     - whitespace
-  
   disable:
-    # Disable overly strict linters for error handling library
-    - cyclop       # Complex functions are sometimes necessary
-    - errname      # Custom error type names are intentional
-    - errorlint    # Error patterns are intentional in error library
-    - forbidigo    # Printf is allowed in examples
-    - gocritic     # Too many false positives for this use case
-    - godot        # Comment style flexibility
-    - gosimple     # Some patterns are intentionally verbose for clarity
-    - ineffassign  # Test patterns may have intentional assignments
-    - nestif       # Complex nesting sometimes necessary
-  # SA1029 conflicts with context usage patterns
-    - stylecheck   # ST1003 conflicts with vAI ALL_CAPS standards
-    - tenv         # Deprecated and conflicts with test patterns
-    - unparam      # Parameters may be unused in interface implementations
-    - wastedassign # Test assignments may be intentionally unused
-
-linters-settings:
-  errcheck:
-    # Ignore fluent API methods that return receivers for chaining
-    exclude-functions:
-      - fmt.Print
-      - fmt.Printf
-      - fmt.Println
-    ignore-type-assertions: true
-  
-  funlen:
-    lines: 100
-    statements: 50
-  
-  cyclop:
-    max-complexity: 15
-  
-  lll:
-    line-length: 120
-  
-
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - experimental
-      - opinionated
-      - performance
-      - style
-    disabled-checks:
-      - dupImport # https://github.com/go-critic/go-critic/issues/845
-      - ifElseChain
-      - octalLiteral
-      - whyNoLint
-      - wrapperFunc
-      - hugeParam
-
-issues:
-  exclude:
-    # Ignore fluent API methods - these return receivers for chaining, not errors to check
-    - "Error return value of `.*\\.With.*` is not checked"
-    - "Error return value of `.*\\.Add.*` is not checked"
-    - "Error return value of `.*\\.Clear.*` is not checked" 
-    - "Error return value of `.*\\.Filter.*` is not checked"
-    - "Error return value of `collection\\..*` is not checked"
-    - "Error return value of `.*\\.Error\\(\\)` is not checked"
-    # Allow context keys as strings in tests and examples  
-    - "should not use basic type.*as key in context.WithValue"
-    # Allow unused parameters in test functions
-    - "parameter.*seems to be unused.*consider removing"
-    # Allow global variables for configuration
-    - "globalStructuredLogger is a global variable"
-    - "globalStructuredLoggerMu is a global variable"
-    - "globalConfig is a global variable"
-    - "globalConfigMu is a global variable"
-    # Allow package comments to be flexible
-    - "should have a package comment"
-    - "comment on exported.*should be of the form"
-    # Allow context fields in builder structs
-    - "found a struct that contains a context.Context field"
-    # Allow ALL_CAPS for constants (vAI standard)
-    - "don't use ALL_CAPS in Go names"
-    # Allow repeated strings in tests
-    - "has .* occurrences, make it a constant"
-    # Allow builtin redefinition in limited scope
-    - "redefinition of the built-in function"
-    # Allow complex functions in migration and utility files
-    - "calculated cyclomatic complexity for function"
-    # Allow custom error type names
-    - "error type name.*should conform to.*Error.*format"
-    # Allow string context keys in builders and utilities
-    - "should not use built-in type string as key for value"
-    # Allow error comparison patterns in error handling library
-    - "type assertion on error will fail on wrapped errors"
-    - "comparing with.*will fail on wrapped errors"
-    - "non-wrapping format verb for fmt.Errorf"
-    # Allow print statements in examples
-    - "use of.*fmt\\.Print.*forbidden"
-    # Allow builtin shadowing in limited contexts
-    - "shadowing of predeclared identifier"
-    # Allow missing switch cases (exhaustive can be overly strict)
-    - "missing cases in switch of type"
-    # Allow stylistic choices
-    - "should omit type.*from declaration"
-    - "Comment should end in a period"
-    # Allow test utility patterns
-    - "can be replaced by.*t\\.Setenv"
-    - "assigned to.*but never used afterwards"
-    - "is unused"
-  
-  exclude-rules:
-    # Exclude magic number checks for HTTP status codes
-    - path: cuserr\.constants\.errors\.go
-      linters:
-        - revive  # Allow ALL_CAPS constants in this file
-    
-    # Exclude magic number checks for test files  
-    - path: _test\.go
-      linters:
-        - funlen
-        - gocognit
-        - dupl
-        - cyclop
-        - gocyclo
-        - errcheck
-        - gosec
-        - testpackage
-    
-    # Exclude strict linting for examples  
-    - path: examples/
-      linters:
-        - errcheck
-        - forbidigo
-        - unused
-        - gosec
-    
-
-  exclude-use-default: false
-
+    - cyclop
+    - errname
+    - errorlint
+    - forbidigo
+    - gocritic
+    - godot
+    - ineffassign
+    - nestif
+    - unparam
+    - wastedassign
+  settings:
+    # v1 disabled `gosimple` and `stylecheck`; v2 folded both into `staticcheck`,
+    # so their check groups are excluded here to keep the SAME rule set the repo
+    # has always run. QF* (quickfix) is excluded for the same reason.
+    staticcheck:
+      checks:
+        - all
+        - -ST*
+        - -QF*
+    cyclop:
+      max-complexity: 15
+    errcheck:
+      exclude-functions:
+        - fmt.Print
+        - fmt.Printf
+        - fmt.Println
+    funlen:
+      lines: 100
+      statements: 50
+    gocritic:
+      disabled-checks:
+        - dupImport
+        - ifElseChain
+        - octalLiteral
+        - whyNoLint
+        - wrapperFunc
+        - hugeParam
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+    lll:
+      line-length: 120
+  exclusions:
+    generated: lax
+    rules:
+      - linters:
+          - revive
+        path: cuserr\.constants\.errors\.go
+      - linters:
+          - cyclop
+          - dupl
+          - errcheck
+          - funlen
+          - gocognit
+          - gocyclo
+          - goconst
+          - gosec
+          - noctx
+          - testpackage
+        path: _test\.go
+      - linters:
+          - errcheck
+          - forbidigo
+          - gosec
+          - unused
+        path: examples/
+      - path: (.+)\.go$
+        text: Error return value of `.*\.With.*` is not checked
+      - path: (.+)\.go$
+        text: Error return value of `.*\.Add.*` is not checked
+      - path: (.+)\.go$
+        text: Error return value of `.*\.Clear.*` is not checked
+      - path: (.+)\.go$
+        text: Error return value of `.*\.Filter.*` is not checked
+      - path: (.+)\.go$
+        text: Error return value of `collection\..*` is not checked
+      - path: (.+)\.go$
+        text: Error return value of `.*\.Error\(\)` is not checked
+      - path: (.+)\.go$
+        text: should not use basic type.*as key in context.WithValue
+      - path: (.+)\.go$
+        text: parameter.*seems to be unused.*consider removing
+      - path: (.+)\.go$
+        text: globalStructuredLogger is a global variable
+      - path: (.+)\.go$
+        text: globalStructuredLoggerMu is a global variable
+      - path: (.+)\.go$
+        text: globalConfig is a global variable
+      - path: (.+)\.go$
+        text: globalConfigMu is a global variable
+      - path: (.+)\.go$
+        text: should have a package comment
+      - path: (.+)\.go$
+        text: comment on exported.*should be of the form
+      - path: (.+)\.go$
+        text: found a struct that contains a context.Context field
+      - path: (.+)\.go$
+        text: don't use ALL_CAPS in Go names
+      - path: (.+)\.go$
+        text: has .* occurrences, make it a constant
+      - path: (.+)\.go$
+        text: redefinition of the built-in function
+      - path: (.+)\.go$
+        text: calculated cyclomatic complexity for function
+      - path: (.+)\.go$
+        text: error type name.*should conform to.*Error.*format
+      - path: (.+)\.go$
+        text: should not use built-in type string as key for value
+      - path: (.+)\.go$
+        text: type assertion on error will fail on wrapped errors
+      - path: (.+)\.go$
+        text: comparing with.*will fail on wrapped errors
+      - path: (.+)\.go$
+        text: non-wrapping format verb for fmt.Errorf
+      - path: (.+)\.go$
+        text: use of.*fmt\.Print.*forbidden
+      - path: (.+)\.go$
+        text: shadowing of predeclared identifier
+      - path: (.+)\.go$
+        text: missing cases in switch of type
+      - path: (.+)\.go$
+        text: should omit type.*from declaration
+      - path: (.+)\.go$
+        text: Comment should end in a period
+      - path: (.+)\.go$
+        text: can be replaced by.*t\.Setenv
+      - path: (.+)\.go$
+        text: assigned to.*but never used afterwards
+      - path: (.+)\.go$
+        text: is unused
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 severity:
-  default-severity: error
+  default: error
+formatters:
+  enable:
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

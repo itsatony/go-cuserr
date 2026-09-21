@@ -36,13 +36,13 @@ type DataRecord struct {
 
 // BatchProcessor processes records in batches
 type BatchProcessor struct {
-	name          string
-	batchSize     int
-	errorCount    int
-	successCount  int
-	logger        *SimpleLogger
-	jobID         string
-	startTime     time.Time
+	name         string
+	batchSize    int
+	errorCount   int
+	successCount int
+	logger       *SimpleLogger
+	jobID        string
+	startTime    time.Time
 }
 
 // SimpleLogger for demonstration
@@ -60,19 +60,19 @@ func (l *SimpleLogger) Log(level, message string, fields map[string]interface{})
 // NewBatchProcessor creates a new batch processor
 func NewBatchProcessor(name string, batchSize int) *BatchProcessor {
 	return &BatchProcessor{
-		name:       name,
-		batchSize:  batchSize,
-		logger:     &SimpleLogger{},
-		jobID:      fmt.Sprintf("job-%d", time.Now().Unix()),
-		startTime:  time.Now(),
+		name:      name,
+		batchSize: batchSize,
+		logger:    &SimpleLogger{},
+		jobID:     fmt.Sprintf("job-%d", time.Now().Unix()),
+		startTime: time.Now(),
 	}
 }
 
 // ProcessRecords processes a batch of records
 func (bp *BatchProcessor) ProcessRecords(ctx context.Context, records []DataRecord) *JobResult {
 	result := &JobResult{
-		ID:        bp.jobID,
-		Success:   true,
+		ID:      bp.jobID,
+		Success: true,
 	}
 
 	startTime := time.Now()
@@ -125,11 +125,11 @@ func (bp *BatchProcessor) ProcessRecords(ctx context.Context, records []DataReco
 
 	// Log job completion
 	bp.logger.Log("INFO", "Batch processing completed", map[string]interface{}{
-		"job_id":       bp.jobID,
-		"success":      result.Success,
-		"processed":    result.Processed,
-		"failed":       result.Failed,
-		"duration_ms":  result.Duration.Milliseconds(),
+		"job_id":      bp.jobID,
+		"success":     result.Success,
+		"processed":   result.Processed,
+		"failed":      result.Failed,
+		"duration_ms": result.Duration.Milliseconds(),
 	})
 
 	return result
@@ -306,10 +306,10 @@ func simulateBackgroundWorker() {
 	// Simulate a queue of tasks
 	tasks := []DataRecord{
 		{ID: "task-1", Email: "worker1@example.com"},
-		{ID: "task-2", Email: "fail@example.com"},        // Will fail
-		{ID: "task-3", Email: "timeout@example.com"},     // Will timeout
+		{ID: "task-2", Email: "fail@example.com"},    // Will fail
+		{ID: "task-3", Email: "timeout@example.com"}, // Will timeout
 		{ID: "task-4", Email: "worker4@example.com"},
-		{ID: "task-5", Email: "critical@example.com"},    // Critical error
+		{ID: "task-5", Email: "critical@example.com"}, // Critical error
 	}
 
 	result := processor.ProcessRecords(ctx, tasks)
@@ -427,9 +427,9 @@ func main() {
 	records := []DataRecord{
 		{ID: "1", Email: "alice@example.com"},
 		{ID: "2", Email: "bob@example.com"},
-		{ID: "3", Email: ""},                      // Invalid
+		{ID: "3", Email: ""}, // Invalid
 		{ID: "4", Email: "carol@example.com"},
-		{ID: "5", Email: "fail@example.com"},      // API failure
+		{ID: "5", Email: "fail@example.com"}, // API failure
 	}
 
 	result := processor.ProcessRecords(ctx, records)

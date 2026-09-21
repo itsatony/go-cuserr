@@ -26,15 +26,15 @@ const (
 func (l LogLevel) String() string {
 	switch l {
 	case LogLevelDebug:
-		return "debug"
+		return LOG_LEVEL_DEBUG
 	case LogLevelInfo:
-		return "info"
+		return LOG_LEVEL_INFO
 	case LogLevelWarn:
-		return "warn"
+		return LOG_LEVEL_WARN
 	case LogLevelError:
-		return "error"
+		return LOG_LEVEL_ERROR
 	default:
-		return "unknown"
+		return LOG_LEVEL_UNKNOWN
 	}
 }
 
@@ -116,10 +116,10 @@ func argsToAttrs(args []any) []slog.Attr {
 // ToLogFields converts error to structured log fields
 func (e *CustomError) ToLogFields() map[string]interface{} {
 	fields := map[string]interface{}{
-		"error_category": string(e.Category),
-		"error_code":     e.Code,
-		"error_message":  e.Message,
-		"timestamp":      e.Timestamp.Format(time.RFC3339),
+		"error_category":     string(e.Category),
+		"error_code":         e.Code,
+		"error_message":      e.Message,
+		JSON_FIELD_TIMESTAMP: e.Timestamp.Format(time.RFC3339),
 	}
 
 	if e.OperationID != "" {
@@ -200,7 +200,7 @@ func (ec *ErrorCollection) ToLogFields() map[string]interface{} {
 		"total_error_count":      ec.Count(),
 		"validation_error_count": len(ec.ValidationErrors),
 		"custom_error_count":     len(ec.Errors),
-		"timestamp":              time.Now().UTC().Format(time.RFC3339),
+		JSON_FIELD_TIMESTAMP:     time.Now().UTC().Format(time.RFC3339),
 	}
 
 	if ec.OperationID != "" {
@@ -220,10 +220,10 @@ func (ec *ErrorCollection) ToLogFields() map[string]interface{} {
 		validationDetails := make([]map[string]string, len(ec.ValidationErrors))
 		for i, vErr := range ec.ValidationErrors {
 			validationDetails[i] = map[string]string{
-				"field":   vErr.Field,
-				"message": vErr.Message,
-				"code":    vErr.Code,
-				"value":   vErr.Value,
+				"field":            vErr.Field,
+				JSON_FIELD_MESSAGE: vErr.Message,
+				JSON_FIELD_CODE:    vErr.Code,
+				"value":            vErr.Value,
 			}
 		}
 		fields["validation_errors"] = validationDetails

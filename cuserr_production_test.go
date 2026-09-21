@@ -294,7 +294,8 @@ func TestProductionReliability(t *testing.T) {
 			}
 
 			// In production, internal errors should be filtered
-			if err.ToPublicJSON()[JSON_FIELD_ERROR].(map[string]interface{})[JSON_FIELD_MESSAGE].(string) != "An internal error occurred" {
+			publicBody := err.ToPublicJSON()[JSON_FIELD_ERROR].(map[string]interface{})
+			if publicBody[JSON_FIELD_MESSAGE].(string) != "An internal error occurred" {
 				t.Errorf("Error %d should be filtered in production", i)
 			}
 		}

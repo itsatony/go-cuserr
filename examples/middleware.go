@@ -151,7 +151,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				"API key required").
 				WithMetadata("header", "X-API-Key").
 				WithMetadata("path", r.URL.Path)
-				unauthorizedErr.OperationID = GetRequestID(r.Context())
+			unauthorizedErr.OperationID = GetRequestID(r.Context())
 
 			WriteErrorResponse(w, unauthorizedErr)
 			return
@@ -164,7 +164,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				nil,
 				"invalid API key").
 				WithMetadata("api_key", maskAPIKey(apiKey))
-				unauthorizedErr.OperationID = GetRequestID(r.Context())
+			unauthorizedErr.OperationID = GetRequestID(r.Context())
 
 			WriteErrorResponse(w, unauthorizedErr)
 			return

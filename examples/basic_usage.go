@@ -83,7 +83,7 @@ func richContextExample() {
 	err.WithMetadata("user_id", "usr_12345")
 	err.WithMetadata("operation", "get_profile")
 	err.WithMetadata("client_ip", "192.168.1.100")
-	err.WithRequestID("req_abc123")
+	err.WithMetadata(cuserr.MetaRequestID, "req_abc123")
 
 	fmt.Printf("   Short: %s\n", err.ShortError())
 	fmt.Printf("   Metadata: %v\n", err.GetAllMetadata())
@@ -166,7 +166,7 @@ func jsonSerializationExample() {
 	err := cuserr.NewCustomError(cuserr.ErrInvalidInput, nil, "validation failed")
 	err.WithMetadata("field", "email")
 	err.WithMetadata("reason", "invalid format")
-	err.WithRequestID("req_json_example")
+	err.WithMetadata(cuserr.MetaRequestID, "req_json_example")
 
 	// Convert to JSON map
 	jsonMap := err.ToJSON()
@@ -182,7 +182,7 @@ func jsonSerializationExample() {
 		ProductionMode:   true,
 	})
 
-	clientJSON := err.ToClientJSON()
+	clientJSON := err.ToPublicJSON()
 	fmt.Printf("   Client-safe JSON: %+v\n", clientJSON)
 	fmt.Println()
 }
@@ -198,7 +198,7 @@ func simulateServiceError() error {
 	return cuserr.NewCustomError(cuserr.ErrNotFound, nil, "user not found").
 		WithMetadata("user_id", userID).
 		WithMetadata("operation", "get_user").
-		WithRequestID("req_simulate_123")
+		WithMetadata(cuserr.MetaRequestID, "req_simulate_123")
 }
 
 // handleServiceError demonstrates error handling pattern

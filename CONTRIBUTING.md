@@ -183,19 +183,35 @@ make pre-commit
 - `make coverage` - Generate coverage report
 - `make examples` - Run example code
 - `make pre-commit` - Run all pre-commit checks
-- `make release-check` - Validate release readiness
+- `make ci-local` - **The full local CI gate** (replaces hosted GitHub Actions)
+- `make build-matrix` - Cross-compile for every supported GOOS/GOARCH
+- `make release-check` - Tag ↔ VERSION guard + coverage floor
+- `make release-ready` - `ci-local` plus the release guards
 
-#### CI/CD Pipeline
+#### CI/CD Pipeline — local, not hosted
 
-Our GitHub Actions pipeline runs:
+⛔ **Hosted GitHub Actions is retired for this repository** (operator decision,
+2026-09-19; issue #10). The workflows are kept, inert, in
+`.github/workflows-disabled/`, and **`make ci-local`** (alias `make ci`) is the
+only gate. It runs:
 
-- **Quality checks** - formatting, linting, vetting
-- **Cross-platform tests** - Linux, Windows, macOS
-- **Go version matrix** - 1.21, 1.22, 1.23
-- **Security scanning** - gosec analysis
-- **Performance tests** - benchmark regression detection
-- **Coverage validation** - >85% threshold
-- **Integration tests** - example compilation and execution
+- **Quality** — `go mod download`/`verify`, `gofmt -s -l`, `go vet`, golangci-lint
+- **Tests** — `go build`, `go test -race`, benchmark smoke test
+- **Coverage** — the floor, *derived* from the parked workflows (≥ 84 %)
+- **Integration** — every build-tagged example must compile, and `basic_usage` must run
+- **Performance** — the three named benchmarks
+- **Cross-compile** — `make build-matrix`: linux/windows/darwin × amd64/arm64
+
+`make release-check` carries what `release.yml` used to: the tag ↔ VERSION guard,
+a CHANGELOG section for the version, and the coverage floor. `make release-ready`
+runs both.
+
+⚠️ **Declared exception:** the 3 OS × Go 1.21/1.22/1.23 test matrix is *not*
+reproduced — one host has one OS and one toolchain. Single-host coverage is
+accepted deliberately; see `.github/workflows-disabled/README.md` for the full
+reasoning and the other exceptions. `TestLocalCIReproducesTheDisabledWorkflows`
+fails if any job, matrix axis or command in the parked workflows lacks a local
+arm or a declared exception.
 
 ### 🔒 Security
 

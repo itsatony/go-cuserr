@@ -5,6 +5,80 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-09-22
+
+### 🏗️ Changed — hosted CI retired, local gate is now the gate (#10)
+
+GitHub Actions is retired for this repository (operator decision, 2026-09-19).
+`ci.yml` and `release.yml` were moved to `.github/workflows-disabled/` — kept, not
+deleted, because they are the **specification** the local gate is compared against.
+
+- **`make ci-local`** (alias `make ci`) covers every reproducible arm of `ci.yml`:
+  `ci-preflight` (tool presence, `go mod download`, `go mod verify`), `ci-fmt`
+  (`gofmt -s -l`), `ci-vet`, `ci-lint`, `ci-build`, `ci-test` (`-race`), `ci-bench`,
+  `ci-coverage`, `ci-examples`, `ci-perf` and a new **`build-matrix`** arm that
+  cross-compiles linux/windows/darwin × amd64/arm64.
+- **`make release-check`** (`scripts/release-check.sh`) carries the load-bearing half
+  of `release.yml`: the tag ↔ VERSION guard, a CHANGELOG-section check, and the
+  coverage floor. It also catches a case the workflow never could — an *existing*
+  tag whose commit's VERSION file disagrees with it. `make release-ready` = both.
+- **The coverage floor is DERIVED, not retyped.** `scripts/coverage-gate.sh` parses
+  it out of the parked workflows and refuses to run if the two state different
+  numbers. A number typed twice is a number that drifts.
+- **`TestLocalCIReproducesTheDisabledWorkflows`** is the ratchet: every job, every
+  `strategy.matrix` axis and every `run:` command in the parked workflows must be
+  either an arm of the local gate or an explicitly declared exception **with a
+  stated reason**. Mutation-verified — adding a job, adding a step, or dropping an
+  arm from `ci-local` each makes it red.
+- **Declared exception:** the 3 OS × Go 1.21/1.22/1.23 test matrix is *not*
+  reproduced. One host runs one OS and one toolchain; a gate that silently dropped
+  it would claim a parity it does not have. Single-host coverage is accepted
+  deliberately, with the cross-compile matrix and the `go.mod` Go floor carrying the
+  compatibility promise instead. Reasons for this and the three other exceptions are
+  in `.github/workflows-disabled/README.md`.
+
+### 🐛 Fixed — three arms that were red on a clean tree
+
+Exactly the failure the issue predicted: an arm that never executes is
+indistinguishable from one that passes. Building the local gate ran them for the
+first time in a while.
+
+- **`gofmt -s -l` reported three files** (`cuserr_protocols_test.go`,
+  `examples/batch_job.go`, `examples/middleware.go`). Formatted.
+- **`golangci-lint` could not load its own config.** `.golangci.yml` was in the v1
+  format that current golangci-lint refuses, and additionally carried an invalid
+  `errcheck.ignore-type-assertions` key. Migrated to the v2 schema; `gosimple` and
+  `stylecheck`, which v1 explicitly disabled, are preserved as `-ST*`/`-QF*`
+  staticcheck exclusions so the rule set is the same one the repo always ran.
+  All 31 findings the migration surfaced are fixed, not suppressed — except
+  `goconst`/`noctx` in `_test.go`, which the v1 config already intended to exclude.
+- **The integration job could not have passed since `b362b56`.** Every example still
+  called `WithRequestID()` / `ToClientJSON()`, removed when the library went
+  protocol-agnostic. Ported to `WithMetadata(cuserr.MetaRequestID, …)` /
+  `ToPublicJSON()`. `ci-examples` now **derives** the example set from the build tags
+  in `examples/*.go` rather than naming four of the eight, which is how three of them
+  rotted unseen.
+
+### 🆕 Added
+
+- `LOG_LEVEL_DEBUG` / `LOG_LEVEL_INFO` / `LOG_LEVEL_WARN` / `LOG_LEVEL_ERROR` /
+  `LOG_LEVEL_UNKNOWN` in `cuserr.constants.errors.go`. Log-level names were bare
+  string literals in `cuserr.logging.go` and `logger_methods.go`; `LOG_LEVEL_ERROR`
+  shares its value with `JSON_FIELD_ERROR` and nothing else — a level and a JSON
+  field are different things that happen to spell the same.
+- JSON field keys in `cuserr.aggregation.go`, `cuserr.logging.go` and
+  `logger_methods.go` now use the existing `JSON_FIELD_*` constants (Rule 1, no
+  strings in code). Values are byte-identical; no wire change.
+
+### ⚠️ Not done
+
+- **Actions is still enabled at the repository level.** Moving the workflow files
+  does *not* disable Actions. `gh api -X PATCH repos/itsatony/go-cuserr/actions/permissions -F enabled=false`
+  answered **404** — the available token has `repo` but not repository-administration
+  rights. `GET .../actions/permissions` still reports `{"enabled":true}`. This must be
+  done by someone with admin rights, or Actions will start reporting again the moment
+  any workflow file is restored.
+
 ## [0.3.0] - 2025-10-11
 
 ### 🚨 Critical Fixes

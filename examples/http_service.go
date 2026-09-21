@@ -42,7 +42,7 @@ func (s *UserService) GetUser(ctx context.Context, userID string) (*User, error)
 			nil,
 			"user ID is required").
 			WithMetadata("field", "user_id").
-			WithRequestID(getRequestIDFromContext(ctx))
+			WithMetadata(cuserr.MetaRequestID, getRequestIDFromContext(ctx))
 	}
 
 	// Look up user
@@ -54,7 +54,7 @@ func (s *UserService) GetUser(ctx context.Context, userID string) (*User, error)
 			"user not found").
 			WithMetadata("user_id", userID).
 			WithMetadata("operation", "get_user").
-			WithRequestID(getRequestIDFromContext(ctx))
+			WithMetadata(cuserr.MetaRequestID, getRequestIDFromContext(ctx))
 	}
 
 	return user, nil
@@ -69,7 +69,7 @@ func (s *UserService) CreateUser(ctx context.Context, email, name string) (*User
 			nil,
 			"email is required").
 			WithMetadata("field", "email").
-			WithRequestID(getRequestIDFromContext(ctx))
+			WithMetadata(cuserr.MetaRequestID, getRequestIDFromContext(ctx))
 	}
 
 	if name == "" {
@@ -78,7 +78,7 @@ func (s *UserService) CreateUser(ctx context.Context, email, name string) (*User
 			nil,
 			"name is required").
 			WithMetadata("field", "name").
-			WithRequestID(getRequestIDFromContext(ctx))
+			WithMetadata(cuserr.MetaRequestID, getRequestIDFromContext(ctx))
 	}
 
 	// Check if user already exists (simulate email uniqueness)
@@ -90,7 +90,7 @@ func (s *UserService) CreateUser(ctx context.Context, email, name string) (*User
 				"user with this email already exists").
 				WithMetadata("email", email).
 				WithMetadata("existing_user_id", existingUser.ID).
-				WithRequestID(getRequestIDFromContext(ctx))
+				WithMetadata(cuserr.MetaRequestID, getRequestIDFromContext(ctx))
 		}
 	}
 
@@ -119,7 +119,7 @@ func (s *UserService) UpdateUser(ctx context.Context, userID, email, name string
 				"cannot update non-existent user").
 				WithMetadata("user_id", userID).
 				WithMetadata("operation", "update_user").
-				WithRequestID(getRequestIDFromContext(ctx))
+				WithMetadata(cuserr.MetaRequestID, getRequestIDFromContext(ctx))
 		}
 		return nil, err
 	}
@@ -174,7 +174,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 			err,
 			"invalid JSON payload").
 			WithMetadata("content_type", r.Header.Get("Content-Type")).
-			WithRequestID(getRequestIDFromContext(r.Context()))
+			WithMetadata(cuserr.MetaRequestID, getRequestIDFromContext(r.Context()))
 
 		h.handleError(w, r, customErr)
 		return
@@ -203,7 +203,7 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 			cuserr.ErrInvalidInput,
 			err,
 			"invalid JSON payload").
-			WithRequestID(getRequestIDFromContext(r.Context()))
+			WithMetadata(cuserr.MetaRequestID, getRequestIDFromContext(r.Context()))
 
 		h.handleError(w, r, customErr)
 		return
@@ -234,7 +234,7 @@ func (h *UserHandler) handleError(w http.ResponseWriter, r *http.Request, err er
 		config := cuserr.GetConfig()
 		var response map[string]interface{}
 		if config.ProductionMode {
-			response = customErr.ToClientJSON()
+			response = customErr.ToPublicJSON()
 		} else {
 			response = customErr.ToJSON()
 		}
@@ -289,11 +289,11 @@ func errorRecoveryMiddleware(next http.Handler) http.Handler {
 					fmt.Errorf("panic: %v", recovered),
 					"internal server error occurred").
 					WithMetadata("panic_value", fmt.Sprintf("%v", recovered)).
-					WithRequestID(getRequestIDFromContext(r.Context()))
+					WithMetadata(cuserr.MetaRequestID, getRequestIDFromContext(r.Context()))
 
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
-				json.NewEncoder(w).Encode(err.ToClientJSON())
+				json.NewEncoder(w).Encode(err.ToPublicJSON())
 			}
 		}()
 
@@ -399,24 +399,24 @@ func demoErrorTypes(w http.ResponseWriter, r *http.Request) {
 	case "validation":
 		err = cuserr.NewCustomError(cuserr.ErrInvalidInput, nil, "validation error example").
 			WithMetadata("field", "email").
-			WithRequestID(requestID)
+			WithMetadata(cuserr.MetaRequestID, requestID)
 	case "not_found":
 		err = cuserr.NewCustomError(cuserr.ErrNotFound, nil, "resource not found example").
 			WithMetadata("resource", "user").
-			WithRequestID(requestID)
+			WithMetadata(cuserr.MetaRequestID, requestID)
 	case "unauthorized":
 		err = cuserr.NewCustomError(cuserr.ErrUnauthorized, nil, "authentication required").
 			WithMetadata("auth_method", "bearer_token").
-			WithRequestID(requestID)
+			WithMetadata(cuserr.MetaRequestID, requestID)
 	case "conflict":
 		err = cuserr.NewCustomError(cuserr.ErrAlreadyExists, nil, "resource conflict example").
 			WithMetadata("resource", "email").
-			WithRequestID(requestID)
+			WithMetadata(cuserr.MetaRequestID, requestID)
 	case "timeout":
 		err = cuserr.NewCustomError(cuserr.ErrTimeout, nil, "operation timeout example").
 			WithMetadata("operation", "database_query").
 			WithMetadata("timeout", "30s").
-			WithRequestID(requestID)
+			WithMetadata(cuserr.MetaRequestID, requestID)
 	default:
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{

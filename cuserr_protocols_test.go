@@ -308,9 +308,9 @@ func TestToText(t *testing.T) {
 		{
 			name: "Error with RequestID fallback",
 			err: &CustomError{
-				Code:      "ERR_TEST",
-				Message:   "Test error",
-				Category:  ErrorCategoryInternal,
+				Code:        "ERR_TEST",
+				Message:     "Test error",
+				Category:    ErrorCategoryInternal,
 				OperationID: "req-67890",
 			},
 			wantContain: []string{"Error:", "Test error", "Operation: req-67890"},
@@ -350,7 +350,10 @@ func TestToCLIOutput(t *testing.T) {
 		}
 
 		// Check content
-		wantContain := []string{"Error", "validation", "Please check your input", "ERR_VALIDATION", "https://docs.example.com/errors", "Check spelling", "Verify format", "op-123"}
+		wantContain := []string{
+			"Error", "validation", "Please check your input", "ERR_VALIDATION",
+			"https://docs.example.com/errors", "Check spelling", "Verify format", "op-123",
+		}
 		for _, want := range wantContain {
 			if !strings.Contains(output, want) {
 				t.Errorf("ToCLIOutput() should contain %q, got:\n%s", want, output)
@@ -496,9 +499,9 @@ func TestToGRPCDetails(t *testing.T) {
 		{
 			name: "Error with RequestID fallback",
 			err: &CustomError{
-				Code:      "ERR_TEST",
-				Message:   "Test error",
-				Category:  ErrorCategoryInternal,
+				Code:        "ERR_TEST",
+				Message:     "Test error",
+				Category:    ErrorCategoryInternal,
 				OperationID: "req-123",
 			},
 			checkFields: []string{"code", "message", "operation_id"},
@@ -541,8 +544,7 @@ func TestToGRPCDetails(t *testing.T) {
 func TestUniversalFieldOptions(t *testing.T) {
 	t.Run("WithPublicMessage", func(t *testing.T) {
 		err := NewValidationError("field", "invalid")
-		err = NewValidationError("field", "invalid") // Create new with option
-		err.PublicMessage = "User-friendly message"  // Set directly for test
+		err.PublicMessage = "User-friendly message" // Set directly for test
 		opt := WithPublicMessage("User-friendly message")
 		opt(err)
 		if err.PublicMessage != "User-friendly message" {

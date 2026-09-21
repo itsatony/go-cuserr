@@ -23,13 +23,13 @@ func (e *CustomError) LogWithLevel(ctx context.Context, level string) {
 	fields := e.toLogFields()
 
 	switch level {
-	case "debug":
+	case LOG_LEVEL_DEBUG:
 		e.logger.Debug(ctx, e.Message, fields...)
-	case "info":
+	case LOG_LEVEL_INFO:
 		e.logger.Info(ctx, e.Message, fields...)
-	case "warn":
+	case LOG_LEVEL_WARN:
 		e.logger.Warn(ctx, e.Message, fields...)
-	case "error":
+	case LOG_LEVEL_ERROR:
 		fallthrough
 	default:
 		e.logger.Error(ctx, e.Message, fields...)
@@ -44,7 +44,7 @@ func (e *CustomError) toLogFields() []Field {
 	fields := []Field{
 		{Key: "error_category", Value: string(e.Category)},
 		{Key: "error_code", Value: e.Code},
-		{Key: "timestamp", Value: e.Timestamp},
+		{Key: JSON_FIELD_TIMESTAMP, Value: e.Timestamp},
 	}
 
 	if e.OperationID != "" {
